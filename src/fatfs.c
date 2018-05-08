@@ -17,29 +17,30 @@
 
 
 
-static void decode_result(FRESULT r){
+static int decode_result(FRESULT r){
 	switch(r){
-	case FR_OK: return;
-	case FR_DISK_ERR: errno = EIO; return;
-	case FR_INT_ERR: errno = EIO; return;
-	case FR_NOT_READY: errno = EIO; return;
-	case FR_NO_FILE: errno = ENOENT; return;
-	case FR_NO_PATH: errno = ENOENT; return;
-	case FR_INVALID_NAME: errno = EINVAL; return;
-	case FR_DENIED: errno = EACCES; return;
-	case FR_EXIST: errno = EEXIST; return;
-	case FR_INVALID_OBJECT: errno = EINVAL; return;
-	case FR_WRITE_PROTECTED: errno = EROFS; return;
-	case FR_INVALID_DRIVE: errno = ENOENT; return;
-	case FR_NOT_ENABLED: errno = EIO; return;
-	case FR_NO_FILESYSTEM: errno = EIO; return;
-	case FR_MKFS_ABORTED: errno = EIO; return;
-	case FR_TIMEOUT: errno = EAGAIN; return;
-	case FR_LOCKED: errno = EIO; return;
-	case FR_NOT_ENOUGH_CORE: errno = ENOMEM; return;
-	case FR_TOO_MANY_OPEN_FILES: errno = ENFILE; return;
-	case FR_INVALID_PARAMETER: errno = EINVAL; return;
+    case FR_OK: return 0;
+    case FR_DISK_ERR: return EIO;
+    case FR_INT_ERR: return EIO;
+    case FR_NOT_READY: return EIO;
+    case FR_NO_FILE: return ENOENT;
+    case FR_NO_PATH: return ENOENT;
+    case FR_INVALID_NAME: return EINVAL;
+    case FR_DENIED: return EACCES;
+    case FR_EXIST: return EEXIST;
+    case FR_INVALID_OBJECT: return EINVAL;
+    case FR_WRITE_PROTECTED: return EROFS;
+    case FR_INVALID_DRIVE: return ENOENT;
+    case FR_NOT_ENABLED: return EIO;
+    case FR_NO_FILESYSTEM: return EIO;
+    case FR_MKFS_ABORTED: return EIO;
+    case FR_TIMEOUT: return EAGAIN;
+    case FR_LOCKED: return EIO;
+    case FR_NOT_ENOUGH_CORE: return ENOMEM;
+    case FR_TOO_MANY_OPEN_FILES: return ENFILE;
+    case FR_INVALID_PARAMETER: return EINVAL;
 	}
+    return ENOTSUP;
 }
 
 extern int ff_force_unlock(int volume);
@@ -128,9 +129,7 @@ int fatfs_mount(const void * cfg){
 	result = f_mount(&(fcfg->state->fs), p, 1);
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FATFS: failed to mount %d\n", result);
-		decode_result(result); //this sets errno
-		errno = result;
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -151,8 +150,7 @@ int fatfs_unmount(const void * cfg){
 	p[2] = 0;
 	result = f_mount(&(fcfg->state->fs), p, 1);
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -170,8 +168,7 @@ int fatfs_mkfs(const void * cfg){
 
 	result = f_mkfs("", 0, 0);
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -186,8 +183,7 @@ int fatfs_mkdir(const void * cfg, const char * path, mode_t mode){
 	result = f_mkdir(p);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -208,8 +204,7 @@ int fatfs_rename(const void * cfg, const char * path_old, const char * path_new)
 	result = f_rename(old, new);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -225,16 +220,14 @@ int fatfs_opendir(const void * cfg, void ** handle, const char * path){
 
 	h = malloc(sizeof(FDIR));
 	if( h == 0 ){
-		errno = ENOMEM;
-		return -1;
+        return SYSFS_SET_RETURN(ENOMEM);
 	}
 
 
 	result = f_opendir(h, p);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	*handle = h;
@@ -254,15 +247,13 @@ int fatfs_chmod(const void * cfg, const char * path, int mode){
 	} else if( mode == 0222 ){
 		fattrib = FA_WRITE;
 	} else {
-		errno = EINVAL;
-		return -1;
+        return SYSFS_SET_RETURN(EINVAL);
 	}
 
 	result = f_chmod(p, fattrib, FA_WRITE | FA_READ);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -286,15 +277,13 @@ int fatfs_readdir_r(const void * cfg, void * handle, int loc, struct dirent * en
 	result = f_readdir(handle, &file_info);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	if( file_info.fattrib & 0x08 ){  //this is the system Drive name
 		result = f_readdir(handle, &file_info);
 		if( result != FR_OK ){
-			decode_result(result); //this sets errno
-			return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 		}
 	}
 
@@ -307,7 +296,7 @@ int fatfs_readdir_r(const void * cfg, void * handle, int loc, struct dirent * en
 
 	if( dp->sect == 0 ){
 		//no more files
-		return -1;
+        return -1; //EOF
 	}
 
 	return 0;
@@ -319,8 +308,7 @@ int fatfs_closedir(const void * cfg, void ** handle){
 	result = f_closedir(*handle);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		ret = -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	} else {
 		ret = 0;
 	}
@@ -352,8 +340,7 @@ int fatfs_open(const void * cfg, void ** handle, const char * path, int flags, i
 	h = malloc(sizeof(FIL));
 	if( h == 0 ){
 		mcu_debug_user_printf("FATFS: Open ENOMEM\n");
-		errno = ENOMEM;
-		return -1;
+        return SYSFS_SET_RETURN(ENOMEM);
 	}
 
 	f_mode = flags_to_fat(flags);
@@ -363,8 +350,7 @@ int fatfs_open(const void * cfg, void ** handle, const char * path, int flags, i
 	if( result != FR_OK ){
 		free(h);
 		mcu_debug_user_printf("FATFS: Open : Result:%d\n", result);
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	*handle = h;
@@ -379,8 +365,7 @@ int fatfs_read(const void * cfg, void * handle, int flags, int loc, void * buf, 
 	result = f_lseek(handle, loc);
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FATFS: Read Seek Result:%d\n", result);
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 
@@ -388,8 +373,7 @@ int fatfs_read(const void * cfg, void * handle, int flags, int loc, void * buf, 
 
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FATFS: Read Result:%d\n", result);
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return bytes;
@@ -402,17 +386,14 @@ int fatfs_write(const void * cfg, void * handle, int flags, int loc, const void 
 	result = f_lseek(handle, loc);
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FATFS: Write Seek Result:%d\n", result);
-		decode_result(result); //this sets errno
-
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	result = f_write(handle, buf, nbyte, &bytes);
 
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FATFS: Write Result:%d\n", result);
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return bytes;
@@ -427,8 +408,7 @@ int fatfs_close(const void * cfg, void ** handle){
 
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FF Close: Result:%d\n", result);
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 	*handle = 0;
 	free(h);
@@ -448,8 +428,7 @@ int fatfs_unlink(const void * cfg, const char * path){
 	result = f_unlink(p);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	return 0;
@@ -470,8 +449,7 @@ int fatfs_stat(const void * cfg, const char * path, struct stat * stat){
 	result = f_stat(p, &file_info);
 
 	if( result != FR_OK ){
-		decode_result(result); //this sets errno
-		return -1;
+        return SYSFS_SET_RETURN(decode_result(result));
 	}
 
 	//now convert to stat

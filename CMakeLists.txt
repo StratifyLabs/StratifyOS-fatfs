@@ -22,7 +22,6 @@ endif()
 set(SOS_LIB_NAME fatfs)
 project(${SOS_LIB_NAME} CXX C)
 
-install(DIRECTORY include/ DESTINATION include)
 set(SOS_LIB_INCLUDE_DIRECTORIES include)
-
+install(DIRECTORY include/ DESTINATION include)
 include( ${CMAKE_SOURCE_DIR}/${SOS_BUILD_CONFIG}.cmake )

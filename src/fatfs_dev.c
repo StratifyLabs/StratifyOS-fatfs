@@ -108,8 +108,7 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 	int retries;
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	if ( cfgp->file->fs == NULL ){
-		errno = EIO;
-		return -1;
+        return -1;
 	}
 
 	fatfs_dev_waitbusy(pdrv);
@@ -146,15 +145,13 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	char * bufp = (char*)buf;
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	if ( cfgp->file->fs == NULL ){
-		errno = EIO;
-		return -1;
+        return -1;
 	}
 
 	int retries;
 
 	fatfs_dev_waitbusy(pdrv);
 
-	errno = 0;
 	//set the location to the location of the blocks
 	for(offset = 0; offset < nbyte; offset += 512 ){
 		retries = 0;
@@ -180,8 +177,7 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	if ( cfgp->file->fs == NULL ){
-		errno = EIO;
-		return -1;
+        return -1;
 	}
 
 	if( sysfs_file_ioctl(cfgp->file, I_DRIVE_GETINFO, info) < 0 ){
@@ -196,15 +192,14 @@ int fatfs_dev_erase(BYTE pdrv){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	drive_attr_t attr;
 	if ( cfgp->file->fs == NULL ){
-		errno = EIO;
-		return -1;
+        return -1;
 	}
 
 	attr.o_flags = DRIVE_FLAG_ERASE_DEVICE;
 
 	if( sysfs_file_ioctl(cfgp->file, I_DRIVE_SETATTR, &attr) < 0 ){
-		return -1;
-	}
+        return -1;
+    }
 
 	fatfs_dev_waitbusy(pdrv);
 
@@ -214,8 +209,7 @@ int fatfs_dev_erase(BYTE pdrv){
 int fatfs_dev_waitbusy(BYTE pdrv){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	if ( cfgp->file->fs == NULL ){
-		errno = EIO;
-		return -1;
+        return -1;
 	}
 
 	while( sysfs_file_ioctl(cfgp->file, I_DRIVE_ISBUSY, 0) > 0 ){
@@ -231,8 +225,7 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 	drive_attr_t attr;
 	//drive_erase_block_t deb;
 	if ( cfgp->file->fs == NULL ){
-		errno = EIO;
-		return -1;
+        return -1;
 	}
 
 	attr.o_flags = DRIVE_FLAG_ERASE_BLOCKS;
@@ -240,8 +233,8 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 	attr.end = end;
 
 	if( sysfs_file_ioctl(cfgp->file, I_DRIVE_SETATTR, &attr) < 0 ){
-		return -1;
-	}
+        return -1;
+    }
 
 	fatfs_dev_waitbusy(pdrv);
 
