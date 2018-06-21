@@ -23,5 +23,5 @@ set(SOS_LIB_NAME fatfs)
 project(${SOS_LIB_NAME} CXX C)
 
 set(SOS_LIB_INCLUDE_DIRECTORIES include)
-install(DIRECTORY include/ DESTINATION include)
+install(DIRECTORY include/ DESTINATION include/sos/fs)
 include( ${CMAKE_SOURCE_DIR}/${SOS_BUILD_CONFIG}.cmake )

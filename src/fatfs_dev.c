@@ -56,43 +56,22 @@ void fatfs_dev_setdelay_mutex(pthread_mutex_t * mutex){
 
 
 int fatfs_dev_open(BYTE pdrv){
-	const fatfs_config_t * cfgp = cfg_table[pdrv];
+    const fatfs_config_t * cfg = cfg_table[pdrv];
 	drive_attr_t attr;
+    int result;
 
-	cfgp->file->flags = O_RDWR;
-	cfgp->file->loc = 0;
-	cfgp->file->fs = cfgp->devfs;
-	//cfgp->file->handle = NULL;
-
-	if( sysfs_file_open(cfgp->file, cfgp->name, 0) < 0 ){
-		return -1;
+    if( (result = sysfs_drive_open(FATFS_DRIVE(cfg))) < 0 ){
+        return result;
 	}
-
-#if 0
-	if( cfgp->file->handle == NULL ){
-		ret = cfgp->devfs->open(
-				cfgp->devfs->config,
-				&(cfgp->file->handle),
-				cfgp->name,
-				O_RDWR,
-				0);
-
-		if( ret < 0 ){
-			return -1;
-		}
-	}
-#endif
-
 
 	attr.o_flags = DRIVE_FLAG_INIT;
-	return sysfs_file_ioctl(cfgp->file, I_DRIVE_SETATTR, &attr);
-	//return cfgp->devfs->ioctl(cfgp->devfs->cfg, cfgp->open_file->handle, I_DRIVE_SETATTR, &attr);
+    return sysfs_drive_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
 }
 
 int fatfs_dev_status(BYTE pdrv){
-	const fatfs_config_t * cfgp = cfg_table[pdrv];
+    const fatfs_config_t * cfg = cfg_table[pdrv];
 
-	if( cfgp->file->handle != 0 ){
+    if( FATFS_CONFIG(cfg)->drive.state->file.fs != 0 ){
 		return 1;
 	}
 
@@ -107,17 +86,13 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 	const char * bufp = buf;
 	int retries;
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
-	if ( cfgp->file->fs == NULL ){
-        return -1;
-	}
 
 	fatfs_dev_waitbusy(pdrv);
 
 	for(offset = 0; offset < nbyte; offset += 512 ){
 		retries = 0;
 		do {
-			cfgp->file->loc = loc;
-			ret = sysfs_file_write(cfgp->file, bufp + offset, 512);
+            ret = sysfs_drive_write(FATFS_DRIVE(cfgp), loc, bufp + offset, 512);
 
 			if( ret == 512 ){
 				fatfs_dev_waitbusy(pdrv);
@@ -144,9 +119,6 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	int ret;
 	char * bufp = (char*)buf;
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
-	if ( cfgp->file->fs == NULL ){
-        return -1;
-	}
 
 	int retries;
 
@@ -156,14 +128,13 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	for(offset = 0; offset < nbyte; offset += 512 ){
 		retries = 0;
 		do {
-			cfgp->file->loc = loc;
-			ret = sysfs_file_read(cfgp->file, bufp + offset, 512);
+            ret = sysfs_drive_read(FATFS_DRIVE(cfgp), loc, bufp + offset, 512);
 			retries++;
 		} while( (retries < MAX_RETRIES) && (ret != 512) );
 		loc++;
 
 		if( retries > 1 ){
-			mcu_debug_user_printf("FATFS: Write retries: %d\n", retries);
+            mcu_debug_user_printf("FATFS: Read retries: %d\n", retries);
 		}
 
 		if( retries == MAX_RETRIES ){
@@ -176,11 +147,8 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 
 int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
-	if ( cfgp->file->fs == NULL ){
-        return -1;
-	}
 
-	if( sysfs_file_ioctl(cfgp->file, I_DRIVE_GETINFO, info) < 0 ){
+    if( sysfs_drive_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0 ){
 		return -1;
 	}
 
@@ -191,13 +159,10 @@ int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 int fatfs_dev_erase(BYTE pdrv){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	drive_attr_t attr;
-	if ( cfgp->file->fs == NULL ){
-        return -1;
-	}
 
 	attr.o_flags = DRIVE_FLAG_ERASE_DEVICE;
 
-	if( sysfs_file_ioctl(cfgp->file, I_DRIVE_SETATTR, &attr) < 0 ){
+    if( sysfs_drive_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
         return -1;
     }
 
@@ -208,12 +173,10 @@ int fatfs_dev_erase(BYTE pdrv){
 
 int fatfs_dev_waitbusy(BYTE pdrv){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
-	if ( cfgp->file->fs == NULL ){
-        return -1;
-	}
+    u32 i = 0;
 
-	while( sysfs_file_ioctl(cfgp->file, I_DRIVE_ISBUSY, 0) > 0 ){
-		usleep(1000);
+    while( (sysfs_drive_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0) && (i < 50) ){
+        ;
 	}
 
 	return 0;
@@ -224,15 +187,12 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	drive_attr_t attr;
 	//drive_erase_block_t deb;
-	if ( cfgp->file->fs == NULL ){
-        return -1;
-	}
 
 	attr.o_flags = DRIVE_FLAG_ERASE_BLOCKS;
 	attr.start = start;
 	attr.end = end;
 
-	if( sysfs_file_ioctl(cfgp->file, I_DRIVE_SETATTR, &attr) < 0 ){
+    if( sysfs_drive_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
         return -1;
     }
 

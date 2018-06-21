@@ -126,7 +126,7 @@ int fatfs_mount(const void * cfg){
 	p[0] = '0' + fcfg->vol_id;
 	p[1] = ':';
 	p[2] = 0;
-	result = f_mount(&(fcfg->state->fs), p, 1);
+    result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
 	if( result != FR_OK ){
 		mcu_debug_user_printf("FATFS: failed to mount %d\n", result);
         return SYSFS_SET_RETURN(decode_result(result));
@@ -148,7 +148,7 @@ int fatfs_unmount(const void * cfg){
 	p[0] = '0' + fcfg->vol_id;
 	p[1] = ':';
 	p[2] = 0;
-	result = f_mount(&(fcfg->state->fs), p, 1);
+    result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
 	if( result != FR_OK ){
         return SYSFS_SET_RETURN(decode_result(result));
 	}
@@ -158,8 +158,7 @@ int fatfs_unmount(const void * cfg){
 }
 
 int fatfs_ismounted(const void * cfg){
-	const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
-	return (fcfg->state->fs.fs_type != 0);
+    return (FATFS_STATE(cfg)->fs.fs_type != 0);
 }
 
 

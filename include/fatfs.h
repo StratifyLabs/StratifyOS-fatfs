@@ -1,6 +1,6 @@
 /*
 
-Copyright 2011-2016 Tyler Gilbert
+Copyright 2011-2018 Tyler Gilbert
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,17 +26,21 @@ limitations under the License.
 #include "fatfs/ff.h"
 
 typedef struct {
+    sysfs_drive_state_t drive;
 	FATFS fs;
 } fatfs_state_t;
 
 typedef struct {
-	const sysfs_t * devfs;
-	const void * dev_cfg;
-	sysfs_file_t * file;
-	fatfs_state_t * state;
-	char name[NAME_MAX];
+    sysfs_drive_config_t drive;
 	u8 vol_id;
 } fatfs_config_t;
+
+
+#define FATFS_DECLARE_CONFIG_STATE(config_name, devfs_value, device_name, vol_id_value) \
+    fatfs_state_t config_name##_state; \
+    const fatfs_config_t config_name##_config = { \
+    .drive = { .devfs = devfs_value, .name = device_name, .state = (sysfs_drive_state_t*)&config_name##_state }, \
+    .vol_id = vol_id_value }
 
 int fatfs_mount(const void * cfg); //initialize the filesystem
 int fatfs_unmount(const void * cfg); //initialize the filesystem

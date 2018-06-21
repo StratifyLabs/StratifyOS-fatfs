@@ -11,6 +11,12 @@
 #include <sos/dev/drive.h>
 #include "integer.h"
 
+
+#define FATFS_CONFIG(cfg) ((fatfs_config_t*)cfg)
+#define FATFS_STATE(cfg) ((fatfs_state_t*)(((fatfs_config_t*)cfg)->drive.state))
+#define FATFS_DRIVE(cfg) &(((fatfs_config_t*)cfg)->drive)
+#define FATFS_DRIVE_MUTEX(cfg) &(((fatfs_config_t*)cfg)->drive.state->mutex)
+
 int fatfs_dev_cfg_volume(const void * cfg);
 
 int fatfs_dev_open(BYTE pdrv);
