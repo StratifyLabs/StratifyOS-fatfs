@@ -11,3 +11,6 @@ set(SOS_LIB_TYPE release)
 set(SOS_LIB_OPTION kernel)
 set(SOS_LIB_INCLUDE_DIRECTORIES include include/fatfs)
 include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
+
+set(SOS_LIB_TYPE debug)
+include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)

@@ -9,6 +9,7 @@
 
 //Copyright 2013-2016 Tyler Gilbert;
 
+#include <mcu/debug.h>
 #include "diskio.h"		/* FatFs lower layer API */
 //#include "usbdisk.h"	/* Example: USB drive control */
 //#include "atadrive.h"	/* Example: ATA drive control */
@@ -77,6 +78,7 @@ DRESULT disk_read (
 		return RES_OK;
 	}
 
+    mcu_debug_user_printf("Disk read error\n");
 	return RES_ERROR;
 }
 
@@ -100,6 +102,7 @@ DRESULT disk_write (
 		return RES_OK;
 	}
 
+    mcu_debug_user_printf("Disk write error\n");
 	return RES_ERROR;
 }
 #endif

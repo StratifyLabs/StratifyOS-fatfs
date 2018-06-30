@@ -26,21 +26,23 @@ limitations under the License.
 #include "fatfs/ff.h"
 
 typedef struct {
-    sysfs_drive_state_t drive;
+    sysfs_shared_state_t drive;
 	FATFS fs;
 } fatfs_state_t;
 
 typedef struct {
-    sysfs_drive_config_t drive;
+    sysfs_shared_config_t drive;
+    u16 wait_busy_microseconds;
+    u16 wait_busy_timeout_count;
 	u8 vol_id;
 } fatfs_config_t;
 
 
-#define FATFS_DECLARE_CONFIG_STATE(config_name, devfs_value, device_name, vol_id_value) \
+#define FATFS_DECLARE_CONFIG_STATE(config_name, devfs_value, device_name, vol_id_value, wait_busy_microseconds_value, wait_busy_timeout_count_value) \
     fatfs_state_t config_name##_state; \
     const fatfs_config_t config_name##_config = { \
-    .drive = { .devfs = devfs_value, .name = device_name, .state = (sysfs_drive_state_t*)&config_name##_state }, \
-    .vol_id = vol_id_value }
+    .drive = { .devfs = devfs_value, .name = device_name, .state = (sysfs_shared_state_t*)&config_name##_state }, \
+    .vol_id = vol_id_value, .wait_busy_microseconds = wait_busy_microseconds_value, .wait_busy_timeout_count = wait_busy_timeout_count_value }
 
 int fatfs_mount(const void * cfg); //initialize the filesystem
 int fatfs_unmount(const void * cfg); //initialize the filesystem
