@@ -128,7 +128,7 @@ int fatfs_mount(const void * cfg){
     p[2] = 0;
     result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
     if( result != FR_OK ){
-        mcu_debug_user_printf("FATFS: failed to mount %d\n", result);
+        mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to mount %d", result);
         return SYSFS_SET_RETURN(decode_result(result));
     }
 
@@ -338,7 +338,7 @@ int fatfs_open(const void * cfg, void ** handle, const char * path, int flags, i
 
     h = malloc(sizeof(FIL));
     if( h == 0 ){
-        mcu_debug_user_printf("FATFS: Open ENOMEM\n");
+        mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Open ENOMEM");
         return SYSFS_SET_RETURN(ENOMEM);
     }
 
@@ -348,7 +348,7 @@ int fatfs_open(const void * cfg, void ** handle, const char * path, int flags, i
 
     if( result != FR_OK ){
         free(h);
-        mcu_debug_user_printf("FATFS: Open : Result:%d\n", result);
+        mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Open : Result:%d", result);
         return SYSFS_SET_RETURN(decode_result(result));
     }
 
@@ -365,7 +365,7 @@ int fatfs_read(const void * cfg, void * handle, int flags, int loc, void * buf, 
     if( loc != f->fptr ){
         result = f_lseek(handle, loc);
         if( result != FR_OK ){
-            mcu_debug_user_printf("FATFS: Read Seek Result:%d\n", result);
+            mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Read Seek Result:%d", result);
             return SYSFS_SET_RETURN(decode_result(result));
         }
     }
@@ -374,7 +374,7 @@ int fatfs_read(const void * cfg, void * handle, int flags, int loc, void * buf, 
     result = f_read(handle, buf, nbyte, &bytes);
 
     if( result != FR_OK ){
-        mcu_debug_user_printf("FATFS: Read Result:%d\n", result);
+        mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Read Result:%d", result);
         return SYSFS_SET_RETURN(decode_result(result));
     }
 
@@ -388,10 +388,10 @@ int fatfs_write(const void * cfg, void * handle, int flags, int loc, const void 
 
 
     if( loc != f->fptr ){
-        mcu_debug_user_printf("Loc: %ld Ptr: %ld\n", loc, f->fptr);
+        mcu_debug_log_info(MCU_DEBUG_FILESYSTEM, "Loc: %ld Ptr: %ld", loc, f->fptr);
         result = f_lseek(handle, loc);
         if( result != FR_OK ){
-            mcu_debug_user_printf("FATFS: Write Seek Result:%d\n", result);
+            mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Write Seek Result:%d", result);
             return SYSFS_SET_RETURN(decode_result(result));
         }
     }
@@ -399,7 +399,7 @@ int fatfs_write(const void * cfg, void * handle, int flags, int loc, const void 
     result = f_write(handle, buf, nbyte, &bytes);
 
     if( result != FR_OK ){
-        mcu_debug_user_printf("FATFS: Write Result:%d\n", result);
+        mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Write Result:%d", result);
         return SYSFS_SET_RETURN(decode_result(result));
     }
 
@@ -414,7 +414,7 @@ int fatfs_close(const void * cfg, void ** handle){
     result = f_close(h);
 
     if( result != FR_OK ){
-        mcu_debug_user_printf("FF Close: Result:%d\n", result);
+        mcu_debug_log_info(MCU_DEBUG_FILESYSTEM, "FF Close: Result:%d", result);
         return SYSFS_SET_RETURN(decode_result(result));
     }
     *handle = 0;

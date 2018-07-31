@@ -78,8 +78,8 @@ DRESULT disk_read (
 		return RES_OK;
 	}
 
-    mcu_debug_user_printf("Disk read error\n");
-	return RES_ERROR;
+    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to read disk");
+    return RES_ERROR;
 }
 
 
@@ -102,8 +102,8 @@ DRESULT disk_write (
 		return RES_OK;
 	}
 
-    mcu_debug_user_printf("Disk write error\n");
-	return RES_ERROR;
+    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to write disk");
+    return RES_ERROR;
 }
 #endif
 
