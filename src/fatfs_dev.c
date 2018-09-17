@@ -63,6 +63,11 @@ int fatfs_dev_open(BYTE pdrv){
     drive_attr_t attr;
     int result;
 
+	 if( FATFS_STATE(cfg)->drive.file.handle != 0 ){
+		 //already initialized
+		 return SYSFS_RETURN_SUCCESS;
+	 }
+
     if( (result = sysfs_shared_open(FATFS_DRIVE(cfg))) < 0 ){
         return result;
     }
@@ -70,6 +75,7 @@ int fatfs_dev_open(BYTE pdrv){
     attr.o_flags = DRIVE_FLAG_INIT;
     return sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
 }
+
 
 int fatfs_dev_status(BYTE pdrv){
     const fatfs_config_t * cfg = cfg_table[pdrv];
