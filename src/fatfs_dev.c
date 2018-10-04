@@ -30,186 +30,186 @@ extern u32 scheduler_timing_get_realtime();
 
 
 DWORD get_fattime(){
-    return time(0);
+	return time(0);
 }
 
 const void * cfg_table[_VOLUMES];
 
 /*
 static void set_delay_mutex(void * args){
-    sched_table[ task_get_current() ].signal_delay_mutex = args;
+	 sched_table[ task_get_current() ].signal_delay_mutex = args;
 }
  */
 
 int fatfs_dev_cfg_volume(const void * cfg){
-    int err;
-    const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
+	int err;
+	const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
 
-    err = -1;
-    if( fcfg->vol_id < _VOLUMES ){
-        cfg_table[fcfg->vol_id] = cfg;
-        err = 0;
-    }
-    return err;
+	err = -1;
+	if( fcfg->vol_id < _VOLUMES ){
+		cfg_table[fcfg->vol_id] = cfg;
+		err = 0;
+	}
+	return err;
 }
 
 void fatfs_dev_setdelay_mutex(pthread_mutex_t * mutex){
-    //cortexm_svcall_t(set_delay_mutex, mutex);
+	//cortexm_svcall_t(set_delay_mutex, mutex);
 }
 
 
 int fatfs_dev_open(BYTE pdrv){
-    const fatfs_config_t * cfg = cfg_table[pdrv];
-    drive_attr_t attr;
-    int result;
+	const fatfs_config_t * cfg = cfg_table[pdrv];
+	drive_attr_t attr;
+	int result;
 
-	 if( FATFS_STATE(cfg)->drive.file.handle != 0 ){
-		 //already initialized
-		 return SYSFS_RETURN_SUCCESS;
-	 }
+	if( FATFS_STATE(cfg)->drive.file.handle != 0 ){
+		//already initialized
+		return SYSFS_RETURN_SUCCESS;
+	}
 
-    if( (result = sysfs_shared_open(FATFS_DRIVE(cfg))) < 0 ){
-        return result;
-    }
+	if( (result = sysfs_shared_open(FATFS_DRIVE(cfg))) < 0 ){
+		return result;
+	}
 
-    attr.o_flags = DRIVE_FLAG_INIT;
-    return sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
+	attr.o_flags = DRIVE_FLAG_INIT;
+	return sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
 }
 
 
 int fatfs_dev_status(BYTE pdrv){
-    const fatfs_config_t * cfg = cfg_table[pdrv];
+	const fatfs_config_t * cfg = cfg_table[pdrv];
 
-    if( FATFS_CONFIG(cfg)->drive.state->file.fs != 0 ){
-        return 1;
-    }
+	if( FATFS_CONFIG(cfg)->drive.state->file.fs != 0 ){
+		return 1;
+	}
 
-    mcu_debug_user_printf("FATFS: No Dev\n");
+	mcu_debug_user_printf("FATFS: No Dev\n");
 
-    return 0;
+	return 0;
 }
 
 int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
-    int ret;
-    const char * bufp = buf;
-    int retries;
-    const fatfs_config_t * cfgp = cfg_table[pdrv];
+	int ret;
+	const char * bufp = buf;
+	int retries;
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
 
-    retries = 0;
-    do {
-        fatfs_dev_waitbusy(pdrv);
-        ret = sysfs_shared_write(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
-        retries++;
-    } while( (retries < MAX_RETRIES) && (ret != nbyte) );
-    loc++;
+	retries = 0;
+	do {
+		fatfs_dev_waitbusy(pdrv);
+		ret = sysfs_shared_write(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
+		retries++;
+	} while( (retries < MAX_RETRIES) && (ret != nbyte) );
+	loc++;
 
-    if( retries > 1 ){
-        mcu_debug_user_printf("FATFS: Write retries: %d (%d, %d) 0x%X (%d)\n", retries, ret, errno, ret, loc);
-    }
+	if( retries > 1 ){
+		mcu_debug_user_printf("FATFS: Write retries: %d (%d, %d) 0x%X (%d)\n", retries, ret, errno, ret, loc);
+	}
 
-    if( retries == MAX_RETRIES ){
-        return -1;
-    }
+	if( retries == MAX_RETRIES ){
+		return -1;
+	}
 
-    return nbyte;
+	return nbyte;
 }
 
 int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
-    int ret;
-    char * bufp = (char*)buf;
-    const fatfs_config_t * cfgp = cfg_table[pdrv];
-    int retries;
+	int ret;
+	char * bufp = (char*)buf;
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
+	int retries;
 
 
-    fatfs_dev_waitbusy(pdrv);
-    //set the location to the location of the blocks
-    retries = 0;
-    do {
-        ret = sysfs_shared_read(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
-        if( ret != 512 ){
-            fatfs_dev_waitbusy(pdrv);
-        }
-        retries++;
-    } while( (retries < MAX_RETRIES) && (ret != nbyte) );
-    loc++;
+	fatfs_dev_waitbusy(pdrv);
+	//set the location to the location of the blocks
+	retries = 0;
+	do {
+		ret = sysfs_shared_read(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
+		if( ret != 512 ){
+			fatfs_dev_waitbusy(pdrv);
+		}
+		retries++;
+	} while( (retries < MAX_RETRIES) && (ret != nbyte) );
+	loc++;
 
-    if( retries > 1 ){
-        mcu_debug_user_printf("FATFS: Read retries: %d\n", retries);
-    }
+	if( retries > 1 ){
+		mcu_debug_user_printf("FATFS: Read retries: %d\n", retries);
+	}
 
-    if( retries == MAX_RETRIES ){
-        return -1;
-    }
+	if( retries == MAX_RETRIES ){
+		return -1;
+	}
 
 
-    return nbyte;
+	return nbyte;
 }
 
 int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
-    const fatfs_config_t * cfgp = cfg_table[pdrv];
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
 
-    if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0 ){
-        mcu_debug_user_printf("Failed to get info\n");
-        return -1;
-    }
+	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0 ){
+		mcu_debug_user_printf("Failed to get info\n");
+		return -1;
+	}
 
-    return 0;
+	return 0;
 }
 
 
 int fatfs_dev_erase(BYTE pdrv){
-    const fatfs_config_t * cfgp = cfg_table[pdrv];
-    drive_attr_t attr;
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
+	drive_attr_t attr;
 
-    attr.o_flags = DRIVE_FLAG_ERASE_DEVICE;
+	attr.o_flags = DRIVE_FLAG_ERASE_DEVICE;
 
-    fatfs_dev_waitbusy(pdrv);
-    if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-        mcu_debug_user_printf("Failed to erase\n");
-        return -1;
-    }
+	fatfs_dev_waitbusy(pdrv);
+	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
+		mcu_debug_user_printf("Failed to erase\n");
+		return -1;
+	}
 
-    return 0;
+	return 0;
 }
 
 int fatfs_dev_waitbusy(BYTE pdrv){
-    const fatfs_config_t * cfgp = cfg_table[pdrv];
-    int result;
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
+	int result;
 
-    while( (result = sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0) ){
-        if( cfgp->wait_busy_microseconds ){
-            usleep(cfgp->wait_busy_microseconds);
-        }
-    }
+	while( (result = sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0) ){
+		if( cfgp->wait_busy_microseconds ){
+			usleep(cfgp->wait_busy_microseconds);
+		}
+	}
 
-    if( result < 0 ){
-        mcu_debug_user_printf("Wait failed %d\n", result);
-    }
+	if( result < 0 ){
+		mcu_debug_user_printf("Wait failed %d\n", result);
+	}
 
-    return 0;
+	return 0;
 }
 
 
 int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
-    const fatfs_config_t * cfgp = cfg_table[pdrv];
-    drive_attr_t attr;
-    //drive_erase_block_t deb;
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
+	drive_attr_t attr;
+	//drive_erase_block_t deb;
 
-    attr.o_flags = DRIVE_FLAG_ERASE_BLOCKS;
-    attr.start = start;
-    attr.end = end;
+	attr.o_flags = DRIVE_FLAG_ERASE_BLOCKS;
+	attr.start = start;
+	attr.end = end;
 
-    fatfs_dev_waitbusy(pdrv);
-    if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-        mcu_debug_user_printf("Failed to erase block %d to %d\n", start, end);
-        return -1;
-    }
+	fatfs_dev_waitbusy(pdrv);
+	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
+		mcu_debug_user_printf("Failed to erase block %d to %d\n", start, end);
+		return -1;
+	}
 
 
-    return 0;
+	return 0;
 }
 
 int fatfs_dev_close(BYTE pdrv){
-    return 0;
+	return 0;
 }
 
