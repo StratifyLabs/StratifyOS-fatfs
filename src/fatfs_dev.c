@@ -24,7 +24,7 @@
 #include "fatfs.h"
 #include "fatfs_dev.h"
 
-#define MAX_RETRIES 10
+#define MAX_RETRIES 4
 
 extern u32 scheduler_timing_get_realtime();
 
@@ -34,6 +34,8 @@ DWORD get_fattime(){
 }
 
 const void * cfg_table[_VOLUMES];
+
+static int reinitalize_drive(BYTE pdrv);
 
 /*
 static void set_delay_mutex(void * args){
@@ -57,11 +59,29 @@ void fatfs_dev_setdelay_mutex(pthread_mutex_t * mutex){
 	//cortexm_svcall_t(set_delay_mutex, mutex);
 }
 
+int reinitalize_drive(BYTE pdrv){
+	const fatfs_config_t * cfg = cfg_table[pdrv];
+#if 0
+	drive_attr_t attr;
+	attr.o_flags = DRIVE_FLAG_RESET;
+	sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
+#else
+	mcu_action_t action;
+	memset(&action, 0, sizeof(action));
+	action.o_events = MCU_EVENT_FLAG_DATA_READY | MCU_EVENT_FLAG_WRITE_COMPLETE;
+	sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_MCU_SETACTION, &action);
+	fatfs_dev_close(pdrv);
+	usleep(1000);
+	fatfs_dev_open(pdrv);
+#endif
+	fatfs_dev_waitbusy(pdrv);
+	return 0;
+}
 
 int fatfs_dev_open(BYTE pdrv){
 	const fatfs_config_t * cfg = cfg_table[pdrv];
-	drive_attr_t attr;
 	int result;
+	drive_attr_t attr;
 
 	if( FATFS_STATE(cfg)->drive.file.handle != 0 ){
 		//already initialized
@@ -71,8 +91,8 @@ int fatfs_dev_open(BYTE pdrv){
 	if( (result = sysfs_shared_open(FATFS_DRIVE(cfg))) < 0 ){
 		return result;
 	}
-
 	attr.o_flags = DRIVE_FLAG_INIT;
+
 	return sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
 }
 
@@ -99,6 +119,9 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 	do {
 		fatfs_dev_waitbusy(pdrv);
 		ret = sysfs_shared_write(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
+		if( ret != nbyte ){
+			reinitalize_drive(pdrv);
+		}
 		retries++;
 	} while( (retries < MAX_RETRIES) && (ret != nbyte) );
 	loc++;
@@ -120,13 +143,13 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	int retries;
 
-
 	fatfs_dev_waitbusy(pdrv);
 	//set the location to the location of the blocks
 	retries = 0;
 	do {
 		ret = sysfs_shared_read(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
-		if( ret != 512 ){
+		if( ret != nbyte ){
+			reinitalize_drive(pdrv);
 			fatfs_dev_waitbusy(pdrv);
 		}
 		retries++;
@@ -210,6 +233,7 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 }
 
 int fatfs_dev_close(BYTE pdrv){
-	return 0;
+	const fatfs_config_t * cfgp = cfg_table[pdrv];
+	return sysfs_shared_close(FATFS_DRIVE(cfgp));
 }
 
