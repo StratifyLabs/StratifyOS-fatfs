@@ -61,7 +61,7 @@ void fatfs_dev_setdelay_mutex(pthread_mutex_t * mutex){
 
 int reinitalize_drive(BYTE pdrv){
 	const fatfs_config_t * cfg = cfg_table[pdrv];
-#if 0
+#if 1
 	drive_attr_t attr;
 	attr.o_flags = DRIVE_FLAG_RESET;
 	sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
@@ -104,7 +104,7 @@ int fatfs_dev_status(BYTE pdrv){
 		return 1;
 	}
 
-	mcu_debug_user_printf("FATFS: No Dev\n");
+	mcu_debug_printf("FATFS: No Dev\n");
 
 	return 0;
 }
@@ -127,7 +127,7 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 	loc++;
 
 	if( retries > 1 ){
-		mcu_debug_user_printf("FATFS: Write retries: %d (%d, %d) 0x%X (%d)\n", retries, ret, errno, ret, loc);
+		mcu_debug_printf("FATFS: Write retries: %d (%d, %d) 0x%X (%d)\n", retries, ret, errno, ret, loc);
 	}
 
 	if( retries == MAX_RETRIES ){
@@ -157,7 +157,7 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	loc++;
 
 	if( retries > 1 ){
-		mcu_debug_user_printf("FATFS: Read retries: %d\n", retries);
+		mcu_debug_printf("FATFS: Read retries: %d\n", retries);
 	}
 
 	if( retries == MAX_RETRIES ){
@@ -172,7 +172,7 @@ int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0 ){
-		mcu_debug_user_printf("Failed to get info\n");
+		mcu_debug_printf("Failed to get info\n");
 		return -1;
 	}
 
@@ -188,7 +188,7 @@ int fatfs_dev_erase(BYTE pdrv){
 
 	fatfs_dev_waitbusy(pdrv);
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-		mcu_debug_user_printf("Failed to erase\n");
+		mcu_debug_printf("Failed to erase\n");
 		return -1;
 	}
 
@@ -206,7 +206,7 @@ int fatfs_dev_waitbusy(BYTE pdrv){
 	}
 
 	if( result < 0 ){
-		mcu_debug_user_printf("Wait failed %d\n", result);
+		mcu_debug_printf("Wait failed %d\n", result);
 	}
 
 	return 0;
@@ -224,7 +224,7 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 
 	fatfs_dev_waitbusy(pdrv);
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-		mcu_debug_user_printf("Failed to erase block %d to %d\n", start, end);
+		mcu_debug_printf("Failed to erase block %d to %d\n", start, end);
 		return -1;
 	}
 

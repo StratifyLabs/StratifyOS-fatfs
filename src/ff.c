@@ -2136,7 +2136,7 @@ BYTE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a b
 	if (move_window(fs, sect) != FR_OK)			/* Load boot record */
 		return 3;
 
-	mcu_debug_user_printf("BS_55AA 0x%X\n", LD_WORD(&fs->win[BS_55AA]));
+	mcu_debug_printf("BS_55AA 0x%X\n", LD_WORD(&fs->win[BS_55AA]));
 	if (LD_WORD(&fs->win[BS_55AA]) != 0xAA55)	/* Check boot record signature (always placed at offset 510 even if the sector size is >512) */
 		return 2;
 
@@ -4044,11 +4044,11 @@ FRESULT f_mkfs (
 
 	/* Check mounted drive and clear work area */
 	if (sfd > 1) return FR_INVALID_PARAMETER;
-	mcu_debug_user_printf("1\n");
+	mcu_debug_printf("1\n");
 	vol = get_ldnumber(&path);
 	if (vol < 0) return FR_INVALID_DRIVE;
 	fs = FatFs[vol];
-	mcu_debug_user_printf("2\n");
+	mcu_debug_printf("2\n");
 	if (!fs) return FR_NOT_ENABLED;
 	fs->fs_type = 0;
 	pdrv = LD2PD(vol);	/* Physical drive */
@@ -4056,9 +4056,9 @@ FRESULT f_mkfs (
 
 	/* Get disk statics */
 	stat = disk_initialize(pdrv);
-	mcu_debug_user_printf("3\n");
+	mcu_debug_printf("3\n");
 	if (stat & STA_NOINIT) return FR_NOT_READY;
-	mcu_debug_user_printf("4\n");
+	mcu_debug_printf("4\n");
 	if (stat & STA_PROTECT) return FR_WRITE_PROTECTED;
 #if _MAX_SS != _MIN_SS		/* Get disk sector size */
 	if (disk_ioctl(pdrv, GET_SECTOR_SIZE, &SS(fs)) != RES_OK || SS(fs) > _MAX_SS || SS(fs) < _MIN_SS)
