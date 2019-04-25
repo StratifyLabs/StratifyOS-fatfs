@@ -33,7 +33,7 @@ DWORD get_fattime(){
 	return time(0);
 }
 
-const void * cfg_table[_VOLUMES];
+static const void * cfg_table[_VOLUMES];
 
 static int reinitalize_drive(BYTE pdrv);
 
@@ -82,6 +82,11 @@ int fatfs_dev_open(BYTE pdrv){
 	const fatfs_config_t * cfg = cfg_table[pdrv];
 	int result;
 	drive_attr_t attr;
+
+	if (cfg == 0) {
+		mcu_debug_printf("FATFS: error, open with no cfg\n");
+		return 1;
+	}
 
 	if( FATFS_STATE(cfg)->drive.file.handle != 0 ){
 		//already initialized
