@@ -132,7 +132,7 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 	loc++;
 
 	if( retries > 1 ){
-		mcu_debug_printf("FATFS: Write retries: %d (%d, %d) 0x%X (%d)\n", retries, ret, errno, ret, loc);
+		mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "FATFS: Write retries: %d (%d, %d) 0x%X (%d)", retries, ret, errno, ret, loc);
 	}
 
 	if( retries == MAX_RETRIES ){
@@ -203,15 +203,29 @@ int fatfs_dev_erase(BYTE pdrv){
 int fatfs_dev_waitbusy(BYTE pdrv){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	int result;
+	int count = 0;
+	int exponential_wait = cfgp->wait_busy_microseconds;
 
-	while( (result = sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0) ){
-		if( cfgp->wait_busy_microseconds ){
-			usleep(cfgp->wait_busy_microseconds);
+	while( (result = sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0)
+			 && ((count < cfgp->wait_busy_timeout_count) || (cfgp->wait_busy_timeout_count == 0)) ){
+		if( exponential_wait ){ usleep(exponential_wait); }
+		if( cfgp->wait_busy_timeout_count ){
+			count++;
+			if (count % 100 == 0 ){
+				exponential_wait *= 2;
+				if( exponential_wait > 10000UL ){
+					exponential_wait = 10000UL;
+				}
+			}
 		}
 	}
 
+	if( cfgp->wait_busy_timeout_count && count >= cfgp->wait_busy_timeout_count ){
+		mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "wait timed out");
+	}
+
 	if( result < 0 ){
-		mcu_debug_printf("Wait failed %d\n", result);
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "wait failed");
 	}
 
 	return 0;
