@@ -3,7 +3,13 @@
 #Add sources to the project
 set(SOURCES_PREFIX ${CMAKE_SOURCE_DIR}/src)
 add_subdirectory(src)
-set(SOS_SOURCELIST ${SOURCES})
+set(HEADERS
+	${CMAKE_SOURCE_DIR}/include/fatfs.h
+	${CMAKE_SOURCE_DIR}/include/fatfs/ff.h
+	${CMAKE_SOURCE_DIR}/include/fatfs/ffconf.h
+	${CMAKE_SOURCE_DIR}/include/fatfs/integer.h
+	)
+set(SOS_SOURCELIST ${SOURCES} ${HEADERS})
 
 
 # Fatfs kernel for cortex m3 and m4

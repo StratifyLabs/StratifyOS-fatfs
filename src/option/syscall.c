@@ -14,7 +14,7 @@
 static pthread_mutex_t fatfs_lock_mutex[_VOLUMES];
 
 extern void cortexm_svcall(void (*function)(void*), void * args);
-extern void scheduler_root_set_delaymutex(void * args);
+extern void scheduler_svcall_set_delaymutex(void * args);
 extern int pthread_mutex_force_unlock(pthread_mutex_t *mutex);
 
 #if _FS_REENTRANT
@@ -115,7 +115,7 @@ int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get
 	if( pthread_mutex_timedlock(sobj, &abs_time) < 0 ){
 		ret = 0;
 	} else {
-		cortexm_svcall(scheduler_root_set_delaymutex, sobj);
+		cortexm_svcall(scheduler_svcall_set_delaymutex, sobj);
 	}
 
 	return ret;
@@ -134,7 +134,7 @@ void ff_rel_grant (
 )
 {
 
-	cortexm_svcall(scheduler_root_set_delaymutex, 0);
+	cortexm_svcall(scheduler_svcall_set_delaymutex, 0);
 	pthread_mutex_unlock(sobj);
 }
 
