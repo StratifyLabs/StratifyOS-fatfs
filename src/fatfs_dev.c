@@ -84,7 +84,10 @@ int fatfs_dev_open(BYTE pdrv){
 	drive_attr_t attr;
 
 	if (cfg == 0) {
-		mcu_debug_printf("FATFS: error, open with no cfg\n");
+		mcu_debug_log_error(
+					MCU_DEBUG_FILESYSTEM,
+					"FATFS: no configuration"
+					);
 		return 1;
 	}
 
@@ -109,7 +112,7 @@ int fatfs_dev_status(BYTE pdrv){
 		return 1;
 	}
 
-	mcu_debug_printf("FATFS: No Dev\n");
+	mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "FATFS: no device");
 
 	return 0;
 }
@@ -162,7 +165,7 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	loc++;
 
 	if( retries > 1 ){
-		mcu_debug_printf("FATFS: Read retries: %d\n", retries);
+		mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "FATFS: Read retries: %d", retries);
 	}
 
 	if( retries == MAX_RETRIES ){
@@ -177,7 +180,7 @@ int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0 ){
-		mcu_debug_printf("Failed to get info\n");
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to get info");
 		return -1;
 	}
 
@@ -193,7 +196,7 @@ int fatfs_dev_erase(BYTE pdrv){
 
 	fatfs_dev_waitbusy(pdrv);
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-		mcu_debug_printf("Failed to erase\n");
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to erase");
 		return -1;
 	}
 
@@ -243,7 +246,10 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 
 	fatfs_dev_waitbusy(pdrv);
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-		mcu_debug_printf("Failed to erase block %d to %d\n", start, end);
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM,
+								  "Failed to erase block %d to %d",
+								  start,
+								  end);
 		return -1;
 	}
 

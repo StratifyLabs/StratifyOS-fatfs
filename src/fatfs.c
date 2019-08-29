@@ -370,7 +370,6 @@ int fatfs_read(const void * cfg, void * handle, int flags, int loc, void * buf, 
 		}
 	}
 
-
 	result = f_read(handle, buf, nbyte, &bytes);
 
 	if( result != FR_OK ){
