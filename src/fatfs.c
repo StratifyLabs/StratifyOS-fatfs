@@ -226,6 +226,7 @@ int fatfs_opendir(const void * cfg, void ** handle, const char * path){
 	result = f_opendir(h, p);
 
 	if( result != FR_OK ){
+		free(h);
 		return SYSFS_SET_RETURN(decode_result(result));
 	}
 
@@ -417,6 +418,7 @@ int fatfs_close(const void * cfg, void ** handle){
 		return SYSFS_SET_RETURN(decode_result(result));
 	}
 	*handle = 0;
+
 	free(h);
 	return 0;
 }
