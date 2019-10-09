@@ -71,9 +71,9 @@ void fatfs_unlock(const void * cfg);
 
 int fatfs_stat(const void * cfg, const char * path, struct stat * stat);
 
-#define FATFS_MOUNT(mount_loc_name, cfgp, access_mode) { \
+#define FATFS_MOUNT(mount_loc_name, cfgp, permissions_value) { \
 	.mount_path = mount_loc_name, \
-	.access = access_mode, \
+	.permissions = permissions_value, \
 	.mount = fatfs_mount, \
 	.unmount = fatfs_unmount, \
 	.ismounted = fatfs_ismounted, \
