@@ -148,10 +148,11 @@ int fatfs_unmount(const void * cfg){
 	p[0] = '0' + fcfg->vol_id;
 	p[1] = ':';
 	p[2] = 0;
-	result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
+	result = f_mount(&FATFS_STATE(cfg)->fs, p, 0);
 	if( result != FR_OK ){
 		return SYSFS_SET_RETURN(decode_result(result));
 	}
+	FATFS_STATE(cfg)->fs.fs_type = 0;
 
 	return 0;
 
