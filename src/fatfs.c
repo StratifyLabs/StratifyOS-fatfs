@@ -106,8 +106,14 @@ static void build_ff_path(const void * cfg, char * p, const char * path){
 	c[0] = '0' + fcfg->vol_id;
 	c[1] = ':';
 	c[2] = 0;
-	strcpy(p, c);
-	strcat(p, path);
+	strncpy(p, c, PATH_MAX);
+	strncat(p, path, PATH_MAX);
+	char * last	= p + strnlen(p, PATH_MAX) - 1;
+	//doesn't like trailing /'s
+	if( *last == '/' ){
+		*last = 0;
+	}
+
 }
 
 int fatfs_mount(const void * cfg){
