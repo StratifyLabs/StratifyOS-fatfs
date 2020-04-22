@@ -194,21 +194,6 @@ int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 }
 
 
-int fatfs_dev_erase(BYTE pdrv){
-	const fatfs_config_t * cfgp = cfg_table[pdrv];
-	drive_attr_t attr;
-
-	attr.o_flags = DRIVE_FLAG_ERASE_DEVICE;
-
-	fatfs_dev_waitbusy(pdrv);
-	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
-		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to erase");
-		return -1;
-	}
-
-	return 0;
-}
-
 int fatfs_dev_waitbusy(BYTE pdrv){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	int result;

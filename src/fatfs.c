@@ -100,12 +100,16 @@ static int mode_to_posix(uint8_t f_mode){
 	return mode;
 }
 
+static void build_ff_drive(const void * cfg, char drive[3]){
+	const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
+	drive[0] = '0' + fcfg->vol_id;
+	drive[1] = ':';
+	drive[2] = 0;
+}
+
 static void build_ff_path(const void * cfg, char * p, const char * path){
 	char c[3];
-	const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
-	c[0] = '0' + fcfg->vol_id;
-	c[1] = ':';
-	c[2] = 0;
+	build_ff_drive(cfg, c);
 	strncpy(p, c, PATH_MAX);
 	strncat(p, path, PATH_MAX);
 	char * last	= p + strnlen(p, PATH_MAX) - 1;
@@ -117,7 +121,6 @@ static void build_ff_path(const void * cfg, char * p, const char * path){
 }
 
 int fatfs_mount(const void * cfg){
-	const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
 	FRESULT result;
 	char p[3];
 
@@ -128,10 +131,8 @@ int fatfs_mount(const void * cfg){
 	//tell the device driver which volume ID is associated with which cfg
 	fatfs_dev_cfg_volume(cfg);
 
+	build_ff_drive(cfg, p);
 	//mount this volume
-	p[0] = '0' + fcfg->vol_id;
-	p[1] = ':';
-	p[2] = 0;
 	result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
 	if( result != FR_OK ){
 		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to mount %d", result);
@@ -142,7 +143,6 @@ int fatfs_mount(const void * cfg){
 }
 
 int fatfs_unmount(const void * cfg){
-	const fatfs_config_t * fcfg = (const fatfs_config_t *)cfg;
 	FRESULT result;
 	char p[3];
 
@@ -151,9 +151,7 @@ int fatfs_unmount(const void * cfg){
 	}
 
 	//unmount this volume
-	p[0] = '0' + fcfg->vol_id;
-	p[1] = ':';
-	p[2] = 0;
+	build_ff_drive(cfg, p);
 	result = f_mount(&FATFS_STATE(cfg)->fs, p, 0);
 	if( result != FR_OK ){
 		return SYSFS_SET_RETURN(decode_result(result));
@@ -171,8 +169,10 @@ int fatfs_ismounted(const void * cfg){
 
 int fatfs_mkfs(const void * cfg){
 	FRESULT result;
-
-	result = f_mkfs("", 0, 0);
+	char p[3];
+	build_ff_drive(cfg, p);
+	mcu_debug_printf("format drive %s\n", p);
+	result = f_mkfs(p, 0, 0);
 	if( result != FR_OK ){
 		return SYSFS_SET_RETURN(decode_result(result));
 	}

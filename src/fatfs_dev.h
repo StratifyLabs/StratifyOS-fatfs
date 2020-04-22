@@ -29,7 +29,6 @@ int fatfs_dev_status(BYTE pdrv);
 int fatfs_dev_ioctl(BYTE pdrv, int request, void * ctl);
 int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info);
 
-int fatfs_dev_erase(BYTE pdrv);
 int fatfs_dev_waitbusy(BYTE pdrv);
 int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end);
 
