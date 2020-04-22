@@ -139,8 +139,8 @@
 / Drive/Volume Configurations
 /---------------------------------------------------------------------------*/
 
-#define _VOLUMES	1
-/* Number of volumes (logical drives) to be used. */
+#define _VOLUMES	4
+/* Number of volumes (logical drives) to be used (max). */
 
 
 #define _STR_VOLUME_ID	0	/* 0:Use only 0-9 for drive ID, 1:Use strings for drive ID */

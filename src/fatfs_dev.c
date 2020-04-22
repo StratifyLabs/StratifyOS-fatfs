@@ -29,6 +29,10 @@
 extern u32 scheduler_timing_get_realtime();
 
 
+#define PARTITION_LOCATION(cfg, loc) (cfg->partition.block_offset + loc)
+#define PARTITION_COUNT(cfg) (cfg->partition.block_count)
+
+
 DWORD get_fattime(){
 	return time(0);
 }
@@ -61,19 +65,9 @@ void fatfs_dev_setdelay_mutex(pthread_mutex_t * mutex){
 
 int reinitalize_drive(BYTE pdrv){
 	const fatfs_config_t * cfg = cfg_table[pdrv];
-#if 1
 	drive_attr_t attr;
 	attr.o_flags = DRIVE_FLAG_RESET;
 	sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
-#else
-	mcu_action_t action;
-	memset(&action, 0, sizeof(action));
-	action.o_events = MCU_EVENT_FLAG_DATA_READY | MCU_EVENT_FLAG_WRITE_COMPLETE;
-	sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_MCU_SETACTION, &action);
-	fatfs_dev_close(pdrv);
-	usleep(1000);
-	fatfs_dev_open(pdrv);
-#endif
 	fatfs_dev_waitbusy(pdrv);
 	return 0;
 }
@@ -126,7 +120,11 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 	retries = 0;
 	do {
 		fatfs_dev_waitbusy(pdrv);
-		ret = sysfs_shared_write(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
+		ret = sysfs_shared_write(
+					FATFS_DRIVE(cfgp),
+					PARTITION_LOCATION(cfgp, loc),
+					bufp,
+					nbyte);
 		if( ret != nbyte ){
 			reinitalize_drive(pdrv);
 		}
@@ -155,7 +153,11 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	//set the location to the location of the blocks
 	retries = 0;
 	do {
-		ret = sysfs_shared_read(FATFS_DRIVE(cfgp), loc, bufp, nbyte);
+		ret = sysfs_shared_read(
+					FATFS_DRIVE(cfgp),
+					PARTITION_LOCATION(cfgp, loc),
+					bufp,
+					nbyte);
 		if( ret != nbyte ){
 			reinitalize_drive(pdrv);
 			fatfs_dev_waitbusy(pdrv);
@@ -182,6 +184,10 @@ int fatfs_dev_getinfo(BYTE pdrv, drive_info_t * info){
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0 ){
 		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to get info");
 		return -1;
+	}
+
+	if( PARTITION_COUNT(cfgp) != 0 ){
+		info->num_write_blocks = PARTITION_COUNT(cfgp);
 	}
 
 	return 0;
@@ -241,8 +247,8 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 	//drive_erase_block_t deb;
 
 	attr.o_flags = DRIVE_FLAG_ERASE_BLOCKS;
-	attr.start = start;
-	attr.end = end;
+	attr.start = PARTITION_LOCATION(cfgp, start);
+	attr.end = PARTITION_LOCATION(cfgp, end);
 
 	fatfs_dev_waitbusy(pdrv);
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){

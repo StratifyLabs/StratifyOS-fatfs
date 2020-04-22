@@ -2136,7 +2136,6 @@ BYTE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a b
 	if (move_window(fs, sect) != FR_OK)			/* Load boot record */
 		return 3;
 
-	mcu_debug_printf("BS_55AA 0x%X\n", LD_WORD(&fs->win[BS_55AA]));
 	if (LD_WORD(&fs->win[BS_55AA]) != 0xAA55)	/* Check boot record signature (always placed at offset 510 even if the sector size is >512) */
 		return 2;
 

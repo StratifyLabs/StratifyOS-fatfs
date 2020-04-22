@@ -31,18 +31,52 @@ typedef struct {
 } fatfs_state_t;
 
 typedef struct {
+	u32 block_offset;
+	u32 block_count;
+} fatfs_config_partition_t;
+
+typedef struct {
 	sysfs_shared_config_t drive;
+	fatfs_config_partition_t partition;
 	u16 wait_busy_microseconds;
 	u16 wait_busy_timeout_count;
 	u8 vol_id;
 } fatfs_config_t;
 
 
-#define FATFS_DECLARE_CONFIG_STATE(config_name, devfs_value, device_name, vol_id_value, wait_busy_microseconds_value, wait_busy_timeout_count_value) \
+#define FATFS_DECLARE_CONFIG_STATE( \
+	config_name, \
+	devfs_value, \
+	device_name, \
+	vol_id_value, \
+	wait_busy_microseconds_value, \
+	wait_busy_timeout_count_value) \
 	fatfs_state_t config_name##_state; \
 	const fatfs_config_t config_name##_config = { \
 	.drive = { .devfs = devfs_value, .name = device_name, .state = (sysfs_shared_state_t*)&config_name##_state }, \
-	.vol_id = vol_id_value, .wait_busy_microseconds = wait_busy_microseconds_value, .wait_busy_timeout_count = wait_busy_timeout_count_value }
+	.vol_id = vol_id_value, \
+	.wait_busy_microseconds = wait_busy_microseconds_value, \
+	.wait_busy_timeout_count = wait_busy_timeout_count_value, \
+	.partition.block_offset = 0, \
+	.partition.block_count = 0 }
+
+#define FATFS_DECLARE_CONFIG_STATE_PARTITION( \
+	config_name, \
+	devfs_value, \
+	device_name, \
+	vol_id_value, \
+	wait_busy_microseconds_value, \
+	wait_busy_timeout_count_value, \
+	partition_block_offset_value, partition_block_count_value) \
+	fatfs_state_t config_name##_state; \
+	const fatfs_config_t config_name##_config = { \
+	.drive = { .devfs = devfs_value, .name = device_name, .state = (sysfs_shared_state_t*)&config_name##_state }, \
+	.vol_id = vol_id_value, \
+	.wait_busy_microseconds = wait_busy_microseconds_value, \
+	.wait_busy_timeout_count = wait_busy_timeout_count_value, \
+	.partition.block_offset = partition_block_offset_value, \
+	.partition.block_count = partition_block_count_value }
+
 
 int fatfs_mount(const void * cfg); //initialize the filesystem
 int fatfs_unmount(const void * cfg); //initialize the filesystem
