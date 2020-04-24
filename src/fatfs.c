@@ -171,7 +171,6 @@ int fatfs_mkfs(const void * cfg){
 	FRESULT result;
 	char p[3];
 	build_ff_drive(cfg, p);
-	mcu_debug_printf("format drive %s\n", p);
 	result = f_mkfs(p, 0, 0);
 	if( result != FR_OK ){
 		return SYSFS_SET_RETURN(decode_result(result));
