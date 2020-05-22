@@ -24,7 +24,7 @@
 #include "fatfs.h"
 #include "fatfs_dev.h"
 
-#define MAX_RETRIES 4
+#define MAX_RETRIES 8
 
 extern u32 scheduler_timing_get_realtime();
 
