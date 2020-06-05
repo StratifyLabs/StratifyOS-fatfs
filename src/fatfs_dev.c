@@ -91,11 +91,16 @@ int fatfs_dev_open(BYTE pdrv){
 	}
 
 	if( (result = sysfs_shared_open(FATFS_DRIVE(cfg))) < 0 ){
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to open drive (%d,%d)\n", result, errno);
 		return result;
 	}
 	attr.o_flags = DRIVE_FLAG_INIT;
 
-	return sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
+	result = sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
+	if( result < 0 ){
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to init drive (%d,%d)", result, errno);
+	}
+	return result;
 }
 
 
