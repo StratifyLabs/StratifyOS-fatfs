@@ -412,6 +412,19 @@ int fatfs_write(const void * cfg, void * handle, int flags, int loc, const void 
 	return bytes;
 }
 
+int fatfs_fsync(const void * cfg, void * handle){
+	FRESULT result;
+	FIL * f = handle;
+
+	result = f_sync(f);
+
+	if( result != FR_OK ){
+		return SYSFS_SET_RETURN(decode_result(result));
+	}
+
+	return 0;
+}
+
 int fatfs_close(const void * cfg, void ** handle){
 	FRESULT result;
 	FIL * h;

@@ -97,6 +97,7 @@ int fatfs_fstat(const void * cfg, void * handle, struct stat * stat);
 int fatfs_open(const void * cfg, void ** handle, const char * path, int flags, int mode);
 int fatfs_read(const void * cfg, void * handle, int flags, int loc, void * buf, int nbyte);
 int fatfs_write(const void * cfg, void * handle, int flags, int loc, const void * buf, int nbyte);
+int fatfs_fsync(const void * cfg, void * handle);
 int fatfs_close(const void * cfg, void ** handle);
 int fatfs_remove(const void * cfg, const char * path);
 int fatfs_unlink(const void * cfg, const char * path);
@@ -116,6 +117,7 @@ int fatfs_stat(const void * cfg, const char * path, struct stat * stat);
 	.mkfs = fatfs_mkfs, \
 	.open = fatfs_open, \
 	.aio = SYSFS_NOTSUP, \
+	.fsync = fatfs_fsync, \
 	.read = fatfs_read, \
 	.write = fatfs_write, \
 	.close = fatfs_close, \
