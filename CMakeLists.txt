@@ -1,13 +1,13 @@
 cmake_minimum_required (VERSION 3.6)
 
-
 if( ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin" )
-  message(STATUS "Load Darwin Toolchain for arm")
-  set(SOS_TOOLCHAIN_CMAKE_PATH /Applications/StratifyLabs-SDK/Tools/gcc/arm-none-eabi/cmake)
+	set(SOS_TOOLCHAIN_CMAKE_PATH /Applications/StratifyLabs-SDK/Tools/gcc/arm-none-eabi/cmake)
 endif()
 if( ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows" )
-  message(STATUS "Load Windows Toolchain for arm")
-  set(SOS_TOOLCHAIN_CMAKE_PATH C:/StratifyLabs-SDK/Tools/gcc/arm-none-eabi/cmake)
+	set(SOS_TOOLCHAIN_CMAKE_PATH C:/StratifyLabs-SDK/Tools/gcc/arm-none-eabi/cmake)
+endif()
+if( ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux" )
+	set(SOS_TOOLCHAIN_CMAKE_PATH /StratifyLabs-SDK/Tools/gcc/arm-none-eabi/cmake)
 endif()
 
 include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-variables.cmake)
