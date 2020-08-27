@@ -21,21 +21,21 @@ static int decode_result(FRESULT r){
 	switch(r){
 		case FR_OK: return 0;
 		case FR_DISK_ERR: return EIO;
-		case FR_INT_ERR: return EIO;
-		case FR_NOT_READY: return EIO;
+		case FR_INT_ERR: return EINTR;
+		case FR_NOT_READY: return EBUSY;
 		case FR_NO_FILE: return ENOENT;
-		case FR_NO_PATH: return ENOENT;
+		case FR_NO_PATH: return ENOTDIR;
 		case FR_INVALID_NAME: return EINVAL;
 		case FR_DENIED: return EACCES;
 		case FR_EXIST: return EEXIST;
-		case FR_INVALID_OBJECT: return EINVAL;
+		case FR_INVALID_OBJECT: return EFAULT;
 		case FR_WRITE_PROTECTED: return EROFS;
-		case FR_INVALID_DRIVE: return ENOENT;
-		case FR_NOT_ENABLED: return EIO;
-		case FR_NO_FILESYSTEM: return EIO;
+		case FR_INVALID_DRIVE: return ENOTDIR;
+		case FR_NOT_ENABLED: return ENXIO;
+		case FR_NO_FILESYSTEM: return ENODEV;
 		case FR_MKFS_ABORTED: return EIO;
 		case FR_TIMEOUT: return EAGAIN;
-		case FR_LOCKED: return EIO;
+		case FR_LOCKED: return EDEADLK;
 		case FR_NOT_ENOUGH_CORE: return ENOMEM;
 		case FR_TOO_MANY_OPEN_FILES: return ENFILE;
 		case FR_INVALID_PARAMETER: return EINVAL;
@@ -135,7 +135,7 @@ int fatfs_mount(const void * cfg){
 	//mount this volume
 	result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
 	if( result != FR_OK ){
-		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to mount %d", result);
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to mount %d (%s)", result, p);
 		return SYSFS_SET_RETURN(decode_result(result));
 	}
 

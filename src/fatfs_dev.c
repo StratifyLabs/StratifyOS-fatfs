@@ -100,6 +100,8 @@ int fatfs_dev_open(BYTE pdrv){
 	if( result < 0 ){
 		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "failed to init drive (%d,%d)", result, errno);
 	}
+
+	mcu_debug_log_info(MCU_DEBUG_FILESYSTEM, "init'd FATFS device");
 	return result;
 }
 
@@ -164,6 +166,7 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 					bufp,
 					nbyte);
 		if( ret != nbyte ){
+			mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "FATFS: reinit drive");
 			reinitalize_drive(pdrv);
 			fatfs_dev_waitbusy(pdrv);
 		}
@@ -176,6 +179,7 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	}
 
 	if( retries == MAX_RETRIES ){
+		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to read with max retries %d", MAX_RETRIES);
 		return -1;
 	}
 
