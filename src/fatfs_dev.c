@@ -126,7 +126,10 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void * buf, int nbyte){
 
 	retries = 0;
 	do {
-		fatfs_dev_waitbusy(pdrv);
+		if( fatfs_dev_waitbusy(pdrv) < 0 ){
+			return -1;
+		}
+
 		ret = sysfs_shared_write(
 					FATFS_DRIVE(cfgp),
 					PARTITION_LOCATION(cfgp, loc),
@@ -156,7 +159,9 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 	const fatfs_config_t * cfgp = cfg_table[pdrv];
 	int retries;
 
-	fatfs_dev_waitbusy(pdrv);
+	if( fatfs_dev_waitbusy(pdrv) < 0 ){
+		return -1;
+	}
 	//set the location to the location of the blocks
 	retries = 0;
 	do {
@@ -168,7 +173,9 @@ int fatfs_dev_read(BYTE pdrv, int loc, void * buf, int nbyte){
 		if( ret != nbyte ){
 			mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "FATFS: reinit drive");
 			reinitalize_drive(pdrv);
-			fatfs_dev_waitbusy(pdrv);
+			if( fatfs_dev_waitbusy(pdrv) < 0 ){
+				return -1;
+			}
 		}
 		retries++;
 	} while( (retries < MAX_RETRIES) && (ret != nbyte) );
@@ -210,7 +217,7 @@ int fatfs_dev_waitbusy(BYTE pdrv){
 	int exponential_wait = cfgp->wait_busy_microseconds;
 
 	while( (result = sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0)
-			 && ((count < cfgp->wait_busy_timeout_count) || (cfgp->wait_busy_timeout_count == 0)) ){
+				 && ((count < cfgp->wait_busy_timeout_count) || (cfgp->wait_busy_timeout_count == 0)) ){
 		if( exponential_wait ){ usleep(exponential_wait); }
 		if( cfgp->wait_busy_timeout_count ){
 			count++;
@@ -225,10 +232,12 @@ int fatfs_dev_waitbusy(BYTE pdrv){
 
 	if( cfgp->wait_busy_timeout_count && count >= cfgp->wait_busy_timeout_count ){
 		mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "wait timed out");
+		return -1;
 	}
 
 	if( result < 0 ){
 		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "wait failed");
+		return -1;
 	}
 
 	return 0;
@@ -247,9 +256,9 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end){
 	fatfs_dev_waitbusy(pdrv);
 	if( sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0 ){
 		mcu_debug_log_error(MCU_DEBUG_FILESYSTEM,
-								  "Failed to erase block %d to %d",
-								  start,
-								  end);
+												"Failed to erase block %d to %d",
+												start,
+												end);
 		return -1;
 	}
 
