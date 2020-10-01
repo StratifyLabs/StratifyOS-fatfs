@@ -35,3 +35,4 @@ project(${SOS_NAME} CXX C)
 set(SOS_INCLUDE_DIRECTORIES include)
 install(DIRECTORY include/ DESTINATION include/sos/fs)
 include( ${CMAKE_SOURCE_DIR}/${SOS_BUILD_CONFIG}.cmake )
+

@@ -20,3 +20,11 @@ include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
 
 set(SOS_CONFIG debug)
 include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
+
+add_custom_target(
+	format
+	COMMAND /usr/local/bin/clang-format
+	-i
+	--verbose
+	${SOS_SOURCELIST}
+	)
