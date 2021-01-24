@@ -7,10 +7,10 @@
 /* storage control module to the FatFs module with a defined API.        */
 /*-----------------------------------------------------------------------*/
 
-// Copyright 2013-2016 Tyler Gilbert;
+// Copyright 2015-2021 Tyler Gilbert and Stratify Labs, Inc; see LICENSE.md
 
 #include "diskio.h" /* FatFs lower layer API */
-#include <mcu/debug.h>
+#include <sos/debug.h>
 //#include "usbdisk.h"	/* Example: USB drive control */
 //#include "atadrive.h"	/* Example: ATA drive control */
 //#include "sdcard.h"		/* Example: MMC/SDC contorl */
@@ -67,7 +67,7 @@ DRESULT disk_read(
     return RES_OK;
   }
 
-  mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to read disk");
+  sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Failed to read disk");
   return RES_ERROR;
 }
 
@@ -88,7 +88,7 @@ DRESULT disk_write(
     return RES_OK;
   }
 
-  mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to write disk");
+  sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Failed to write disk");
   return RES_ERROR;
 }
 #endif

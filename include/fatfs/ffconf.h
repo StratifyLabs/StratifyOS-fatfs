@@ -95,9 +95,12 @@
 /   874  - Thai (OEM, Windows)
 /   1    - ASCII (Valid for only non-LFN cfg.) */
 
-
-#define	_USE_LFN	2		/* 0 to 3 */
-#define	_MAX_LFN	23		/* Maximum LFN length to handle (12 to 255) */
+#define _USE_LFN 2 /* 0 to 3 */
+#if PATH_MAX > 255
+#define _MAX_LFN 255 /* Maximum LFN length to handle (12 to 255) */
+#else
+#define _MAX_LFN PATH_MAX /* Maximum LFN length to handle (12 to 255) */
+#endif
 /* The _USE_LFN option switches the LFN feature.
 /
 /   0: Disable LFN feature. _MAX_LFN and _LFN_UNICODE have no effect.
@@ -105,25 +108,23 @@
 /   2: Enable LFN with dynamic working buffer on the STACK.
 /   3: Enable LFN with dynamic working buffer on the HEAP.
 /
-/  When enable LFN feature, Unicode handling functions ff_convert() and ff_wtoupper()
-/  function must be added to the project.
-/  The LFN working buffer occupies (_MAX_LFN + 1) * 2 bytes. When use stack for the
-/  working buffer, take care on stack overflow. When use heap memory for the working
-/  buffer, memory management functions, ff_memalloc() and ff_memfree(), must be added
-/  to the project. */
+/  When enable LFN feature, Unicode handling functions ff_convert() and
+ff_wtoupper() /  function must be added to the project. /  The LFN working
+buffer occupies (_MAX_LFN + 1) * 2 bytes. When use stack for the /  working
+buffer, take care on stack overflow. When use heap memory for the working /
+buffer, memory management functions, ff_memalloc() and ff_memfree(), must be
+added /  to the project. */
 
-
-#define	_LFN_UNICODE	0	/* 0:ANSI/OEM or 1:Unicode */
-/* To switch the character encoding on the FatFs API (TCHAR) to Unicode, enable LFN
-/  feature and set _LFN_UNICODE to 1. This option affects behavior of string I/O
-/  functions. */
-
+#define _LFN_UNICODE 0 /* 0:ANSI/OEM or 1:Unicode */
+/* To switch the character encoding on the FatFs API (TCHAR) to Unicode, enable
+LFN /  feature and set _LFN_UNICODE to 1. This option affects behavior of string
+I/O /  functions. */
 
 #define _STRF_ENCODE	3	/* 0:ANSI/OEM, 1:UTF-16LE, 2:UTF-16BE, 3:UTF-8 */
-/* When Unicode API is enabled by _LFN_UNICODE option, this option selects the character
-/  encoding on the file to be read/written via string I/O functions, f_gets(), f_putc(),
-/  f_puts and f_printf(). This option has no effect when Unicode API is not enabled. */
-
+/* When Unicode API is enabled by _LFN_UNICODE option, this option selects the
+character /  encoding on the file to be read/written via string I/O functions,
+f_gets(), f_putc(), /  f_puts and f_printf(). This option has no effect when
+Unicode API is not enabled. */
 
 #define _FS_RPATH		0	/* 0 to 2 */
 /* The _FS_RPATH option configures relative path feature.
@@ -133,7 +134,6 @@
 /   2: f_getcwd() function is available in addition to 1.
 /
 /  Note that output of the f_readdir() fnction is affected by this option. */
-
 
 /*---------------------------------------------------------------------------/
 / Drive/Volume Configurations

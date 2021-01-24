@@ -1,13 +1,10 @@
-/* Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
- *
- *
- */
+// Copyright 2015-2021 Tyler Gilbert and Stratify Labs, Inc; see LICENSE.md
 
 #include "fatfs.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <mcu/core.h>
-#include <mcu/debug.h>
+#include <sos/debug.h>
 #include <sos/dev/drive.h>
 #include <sos/dev/tmr.h>
 #include <stdint.h>
@@ -73,7 +70,7 @@ int fatfs_dev_open(BYTE pdrv) {
   drive_attr_t attr;
 
   if (cfg == 0) {
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "FATFS: no configuration");
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "FATFS: no configuration");
     return 1;
   }
 
@@ -83,8 +80,8 @@ int fatfs_dev_open(BYTE pdrv) {
   }
 
   if ((result = sysfs_shared_open(FATFS_DRIVE(cfg))) < 0) {
-    mcu_debug_log_error(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_error(
+      SOS_DEBUG_FILESYSTEM,
       "failed to open drive (%d,%d)\n",
       result,
       errno);
@@ -94,14 +91,14 @@ int fatfs_dev_open(BYTE pdrv) {
 
   result = sysfs_shared_ioctl(FATFS_DRIVE(cfg), I_DRIVE_SETATTR, &attr);
   if (result < 0) {
-    mcu_debug_log_error(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_error(
+      SOS_DEBUG_FILESYSTEM,
       "failed to init drive (%d,%d)",
       result,
       errno);
   }
 
-  mcu_debug_log_info(MCU_DEBUG_FILESYSTEM, "init'd FATFS device");
+  sos_debug_log_info(SOS_DEBUG_FILESYSTEM, "opened FATFS device");
   return result;
 }
 
@@ -112,7 +109,7 @@ int fatfs_dev_status(BYTE pdrv) {
     return 1;
   }
 
-  mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "FATFS: no device");
+  sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "FATFS: no device");
 
   return 0;
 }
@@ -126,7 +123,6 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void *buf, int nbyte) {
   retries = 0;
   do {
     if (fatfs_dev_waitbusy(pdrv) < 0) {
-      MCU_DEBUG_LINE_TRACE();
       return -1;
     }
 
@@ -143,8 +139,8 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void *buf, int nbyte) {
   loc++;
 
   if (retries > 1) {
-    mcu_debug_log_warning(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_warning(
+      SOS_DEBUG_FILESYSTEM,
       "FATFS: Write retries: %d (%d, %d) 0x%X (%d)",
       retries,
       ret,
@@ -154,7 +150,6 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void *buf, int nbyte) {
   }
 
   if (retries == MAX_RETRIES) {
-    MCU_DEBUG_LINE_TRACE();
     return -1;
   }
 
@@ -168,7 +163,6 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
   int retries;
 
   if (fatfs_dev_waitbusy(pdrv) < 0) {
-    MCU_DEBUG_LINE_TRACE();
     return -1;
   }
 
@@ -182,7 +176,7 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
       bufp,
       nbyte);
     if (ret != nbyte) {
-      mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "FATFS: reinit drive");
+      sos_debug_log_warning(SOS_DEBUG_FILESYSTEM, "FATFS: reinit drive");
       reinitalize_drive(pdrv);
       if (fatfs_dev_waitbusy(pdrv) < 0) {
         return -1;
@@ -193,15 +187,15 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
   loc++;
 
   if (retries > 1) {
-    mcu_debug_log_warning(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_warning(
+      SOS_DEBUG_FILESYSTEM,
       "FATFS: Read retries: %d",
       retries);
   }
 
   if (retries == MAX_RETRIES) {
-    mcu_debug_log_error(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_error(
+      SOS_DEBUG_FILESYSTEM,
       "Failed to read with max retries %d",
       MAX_RETRIES);
     return -1;
@@ -214,7 +208,7 @@ int fatfs_dev_getinfo(BYTE pdrv, drive_info_t *info) {
   const fatfs_config_t *cfgp = cfg_table[pdrv];
 
   if (sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_GETINFO, info) < 0) {
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Failed to get info");
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Failed to get info");
     return -1;
   }
 
@@ -249,12 +243,12 @@ int fatfs_dev_waitbusy(BYTE pdrv) {
   }
 
   if (cfgp->wait_busy_timeout_count && count >= cfgp->wait_busy_timeout_count) {
-    mcu_debug_log_warning(MCU_DEBUG_FILESYSTEM, "wait timed out");
+    sos_debug_log_warning(SOS_DEBUG_FILESYSTEM, "wait timed out");
     return -1;
   }
 
   if (result < 0) {
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "wait failed");
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "wait failed");
     return -1;
   }
 
@@ -272,8 +266,8 @@ int fatfs_dev_eraseblocks(BYTE pdrv, int start, int end) {
 
   fatfs_dev_waitbusy(pdrv);
   if (sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_SETATTR, &attr) < 0) {
-    mcu_debug_log_error(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_error(
+      SOS_DEBUG_FILESYSTEM,
       "Failed to erase block %d to %d",
       start,
       end);

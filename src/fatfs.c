@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <mcu/debug.h>
+#include <sos/debug.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +28,7 @@ static int decode_result(FRESULT r) {
   case FR_NO_PATH:
     return ENOTDIR;
   case FR_INVALID_NAME:
-    return EINVAL;
+    return ENOENT;
   case FR_DENIED:
     return EACCES;
   case FR_EXIST:
@@ -150,8 +150,8 @@ int fatfs_mount(const void *cfg) {
   // mount this volume
   result = f_mount(&FATFS_STATE(cfg)->fs, p, 1);
   if (result != FR_OK) {
-    mcu_debug_log_error(
-      MCU_DEBUG_FILESYSTEM,
+    sos_debug_log_error(
+      SOS_DEBUG_FILESYSTEM,
       "failed to mount %d (%s)",
       result,
       p);
@@ -203,7 +203,6 @@ int fatfs_mkdir(const void *cfg, const char *path, mode_t mode) {
   build_ff_path(cfg, p, path);
 
   result = f_mkdir(p);
-
   if (result != FR_OK) {
     return SYSFS_SET_RETURN(decode_result(result));
   }
@@ -287,17 +286,19 @@ int fatfs_readdir_r(
   FRESULT result;
   FILINFO file_info;
   FDIR *dp = handle;
-  char lfn[NAME_MAX];
+  char lfn[NAME_MAX + 1];
 
   memset(lfn, 0, NAME_MAX);
   file_info.lfname = lfn;
-  file_info.lfsize = NAME_MAX - 1;
+  file_info.lfsize = NAME_MAX;
 
+  sos_debug_printf("NAME MAX: %d\n", NAME_MAX);
   if (loc == 0) {
     // rewind the directory
     f_readdir(handle, 0);
   }
 
+  sos_debug_printf("LFN = %d\n", _MAX_LFN);
   result = f_readdir(handle, &file_info);
 
   if (result != FR_OK) {
@@ -330,16 +331,19 @@ int fatfs_closedir(const void *cfg, void **handle) {
   FRESULT result;
   int ret;
 
-  result = f_closedir(*handle);
+  if (*handle != NULL) {
 
-  if (result != FR_OK) {
-    return SYSFS_SET_RETURN(decode_result(result));
-  } else {
-    ret = 0;
+    result = f_closedir(*handle);
+
+    if (result != FR_OK) {
+      return SYSFS_SET_RETURN(decode_result(result));
+    } else {
+      ret = 0;
+    }
+
+    free(*handle);
   }
-
-  free(*handle);
-  *handle = 0;
+  *handle = NULL;
 
   return ret;
 }
@@ -369,7 +373,7 @@ int fatfs_open(
 
   h = malloc(sizeof(FIL));
   if (h == 0) {
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Open ENOMEM");
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Open ENOMEM");
     return SYSFS_SET_RETURN(ENOMEM);
   }
 
@@ -379,7 +383,7 @@ int fatfs_open(
 
   if (result != FR_OK) {
     free(h);
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Open : Result:%d", result);
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Open : Result:%d", result);
     return SYSFS_SET_RETURN(decode_result(result));
   }
 
@@ -402,7 +406,7 @@ int fatfs_read(
   if (loc != f->fptr) {
     result = f_lseek(handle, loc);
     if (result != FR_OK) {
-      mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Read Seek Result:%d", result);
+      sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Read Seek Result:%d", result);
       return SYSFS_SET_RETURN(decode_result(result));
     }
   }
@@ -410,7 +414,7 @@ int fatfs_read(
   result = f_read(handle, buf, nbyte, &bytes);
 
   if (result != FR_OK) {
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Read Result:%d", result);
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Read Result:%d", result);
     return SYSFS_SET_RETURN(decode_result(result));
   }
 
@@ -429,10 +433,10 @@ int fatfs_write(
   FIL *f = handle;
 
   if (loc != f->fptr) {
-    mcu_debug_log_info(MCU_DEBUG_FILESYSTEM, "Loc: %ld Ptr: %ld", loc, f->fptr);
+    sos_debug_log_info(SOS_DEBUG_FILESYSTEM, "Loc: %ld Ptr: %ld", loc, f->fptr);
     result = f_lseek(handle, loc);
     if (result != FR_OK) {
-      mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Write Seek Result:%d", result);
+      sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Write Seek Result:%d", result);
       return SYSFS_SET_RETURN(decode_result(result));
     }
   }
@@ -440,7 +444,7 @@ int fatfs_write(
   result = f_write(handle, buf, nbyte, &bytes);
 
   if (result != FR_OK) {
-    mcu_debug_log_error(MCU_DEBUG_FILESYSTEM, "Write Result:%d", result);
+    sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Write Result:%d", result);
     return SYSFS_SET_RETURN(decode_result(result));
   }
 
@@ -468,7 +472,7 @@ int fatfs_close(const void *cfg, void **handle) {
   result = f_close(h);
 
   if (result != FR_OK) {
-    mcu_debug_log_info(MCU_DEBUG_FILESYSTEM, "FF Close: Result:%d", result);
+    sos_debug_log_info(SOS_DEBUG_FILESYSTEM, "FF Close: Result:%d", result);
     return SYSFS_SET_RETURN(decode_result(result));
   }
   *handle = 0;

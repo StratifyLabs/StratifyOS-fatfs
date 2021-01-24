@@ -16,7 +16,7 @@
 /----------------------------------------------------------------------------*/
 
 
-#include <mcu/debug.h>
+#include <sos/debug.h>
 
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of disk I/O functions */
