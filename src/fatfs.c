@@ -292,13 +292,11 @@ int fatfs_readdir_r(
   file_info.lfname = lfn;
   file_info.lfsize = NAME_MAX;
 
-  sos_debug_printf("NAME MAX: %d\n", NAME_MAX);
   if (loc == 0) {
     // rewind the directory
     f_readdir(handle, 0);
   }
 
-  sos_debug_printf("LFN = %d\n", _MAX_LFN);
   result = f_readdir(handle, &file_info);
 
   if (result != FR_OK) {
