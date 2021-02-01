@@ -5,6 +5,12 @@
 #ifndef _FFCONF
 #define _FFCONF 32020	/* Revision ID */
 
+#if defined __v7em_f5dh || defined __v7em_f5sh
+#include <sdk/types.h>
+#define FF_ALIGN_WINDOW MCU_ALIGN(32)
+#else
+#define FF_ALIGN_WINDOW
+#endif
 
 /*---------------------------------------------------------------------------/
 / Functions and Buffer Configurations
@@ -16,14 +22,12 @@
 /  the file system object (FATFS) instead of private sector buffer eliminated
 /  from the file object (FIL). */
 
-
-#define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
+#define _FS_READONLY 0 /* 0:Read/Write or 1:Read only */
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
 /  writing functions, f_write(), f_sync(), f_unlink(), f_mkdir(), f_chmod(),
 /  f_rename(), f_truncate() and useless f_getfree(). */
 
-
-#define _FS_MINIMIZE	0	/* 0 to 3 */
+#define _FS_MINIMIZE 0 /* 0 to 3 */
 /* The _FS_MINIMIZE option defines minimization level to remove API functions.
 /
 /   0: All basic functions are enabled.
@@ -32,33 +36,26 @@
 /   2: f_opendir(), f_readdir() and f_closedir() are removed in addition to 1.
 /   3: f_lseek() function is removed in addition to 2. */
 
-
-#define	_USE_STRFUNC	0	/* 0:Disable or 1-2:Enable */
+#define _USE_STRFUNC 0 /* 0:Disable or 1-2:Enable */
 /* To enable string functions, set _USE_STRFUNC to 1 or 2. */
 
-
-#define _USE_FIND		0
+#define _USE_FIND 0
 /* This option switches filtered directory read feature and related functions,
 /  f_findfirst() and f_findnext(). (0:Disable or 1:Enable) */
 
-
-#define	_USE_MKFS		1	/* 0:Disable or 1:Enable */
+#define _USE_MKFS 1 /* 0:Disable or 1:Enable */
 /* To enable f_mkfs() function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
-
-#define	_USE_FASTSEEK	0	/* 0:Disable or 1:Enable */
+#define _USE_FASTSEEK 0 /* 0:Disable or 1:Enable */
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
 
-
-#define _USE_LABEL		0
+#define _USE_LABEL 0
 /* This option switches volume label functions, f_getlabel() and f_setlabel().
 /  (0:Disable or 1:Enable) */
 
-
-#define	_USE_FORWARD	0
+#define _USE_FORWARD 0
 /* This option switches f_forward() function. (0:Disable or 1:Enable)
 /  To enable it, also _FS_TINY need to be set to 1. */
-
 
 /*---------------------------------------------------------------------------/
 / Locale and Namespace Configurations
@@ -159,7 +156,8 @@ Unicode API is not enabled. */
 
 
 #define	_MIN_SS		512
-#define	_MAX_SS		512
+#define _MAX_SS 512
+
 /* These options configure the sector size to be supported. (512, 1024, 2048 or 4096)
 /  Always set both 512 for most systems, all memory card and hard disk. But a larger
 /  value may be required for on-board flash memory and some type of optical media.

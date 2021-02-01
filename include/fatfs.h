@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
   sysfs_shared_config_t drive;
   fatfs_config_partition_t partition;
+  int (*is_drive_present)();
   u16 wait_busy_microseconds;
   u16 wait_busy_timeout_count;
   u8 vol_id;

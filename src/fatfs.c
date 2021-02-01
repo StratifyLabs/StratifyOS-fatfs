@@ -139,6 +139,14 @@ int fatfs_mount(const void *cfg) {
   FRESULT result;
   char p[3];
 
+  if (
+    FATFS_CONFIG(cfg)->is_drive_present
+    && (FATFS_CONFIG(cfg)->is_drive_present() == 0)) {
+    // not present -- not an error
+    errno = ENODEV;
+    return -1;
+  }
+
   if (fatfs_ismounted(cfg) != 0) {
     return 0; // already mounted
   }
@@ -164,6 +172,13 @@ int fatfs_mount(const void *cfg) {
 int fatfs_unmount(const void *cfg) {
   FRESULT result;
   char p[3];
+
+  if (
+    FATFS_CONFIG(cfg)->is_drive_present
+    && (FATFS_CONFIG(cfg)->is_drive_present() == 0)) {
+    // not present -- not an error
+    return 0;
+  }
 
   if (fatfs_ismounted(cfg) == 0) {
     return 0; // not mounted
