@@ -9,7 +9,7 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_MODULE_PATH}/sos-toolchain.cmake)
 include(sos-sdk)
 
 if(NOT DEFINED API_IS_SDK)
-	include(API)
+	#include(API)
 endif()
 
 project(fatfs CXX C)
@@ -21,8 +21,6 @@ sos_sdk_add_out_of_source_directory(PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/
 sos_sdk_add_out_of_source_directory(INTERFACE_SOURCES include ${RELEASE_TARGET}_include)
 
 add_library(${RELEASE_TARGET} STATIC)
-
-set_property(TARGET ${RELEASE_TARGET} PROPERTY CXX_STANDARD 17)
 
 target_sources(${RELEASE_TARGET}
 	PRIVATE
