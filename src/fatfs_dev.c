@@ -131,6 +131,7 @@ int fatfs_dev_write(BYTE pdrv, int loc, const void *buf, int nbyte) {
       PARTITION_LOCATION(cfgp, loc),
       bufp,
       nbyte);
+
     if (ret != nbyte) {
       reinitalize_drive(pdrv);
     }
@@ -162,19 +163,20 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
   const fatfs_config_t *cfgp = cfg_table[pdrv];
   int retries;
 
-  if (fatfs_dev_waitbusy(pdrv) < 0) {
-    return -1;
-  }
-
   // set the location to the location of the blocks
   retries = 0;
   do {
+
+    if (fatfs_dev_waitbusy(pdrv) < 0) {
+      return -1;
+    }
 
     ret = sysfs_shared_read(
       FATFS_DRIVE(cfgp),
       PARTITION_LOCATION(cfgp, loc),
       bufp,
       nbyte);
+
     if (ret != nbyte) {
       sos_debug_log_warning(SOS_DEBUG_FILESYSTEM, "FATFS: reinit drive");
       reinitalize_drive(pdrv);
