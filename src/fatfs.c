@@ -3,8 +3,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sos/debug.h>
 #include <pthread.h>
+#include <sos/debug.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,8 +91,7 @@ static u8 flags_to_fat(int flags) {
 }
 
 static int mode_to_posix(uint8_t f_mode) {
-  int mode;
-  mode = 0;
+  int mode = 0;
 
   if (f_mode & AM_RDO) {
     // Read only
@@ -213,7 +212,7 @@ int fatfs_mkfs(const void *cfg) {
 
 int fatfs_mkdir(const void *cfg, const char *path, mode_t mode) {
   FRESULT result;
-  char p[PATH_MAX];
+  char p[PATH_MAX + 1];
 
   build_ff_path(cfg, p, path);
 
@@ -230,8 +229,8 @@ int fatfs_rmdir(const void *cfg, const char *path) {
 }
 
 int fatfs_rename(const void *cfg, const char *path_old, const char *path_new) {
-  char old[PATH_MAX];
-  char new[PATH_MAX];
+  char old[PATH_MAX + 1];
+  char new[PATH_MAX + 1];
   FRESULT result;
 
   build_ff_path(cfg, old, path_old);
@@ -249,7 +248,7 @@ int fatfs_rename(const void *cfg, const char *path_old, const char *path_new) {
 int fatfs_opendir(const void *cfg, void **handle, const char *path) {
   FDIR *h;
   FRESULT result;
-  char p[PATH_MAX];
+  char p[PATH_MAX + 1];
   build_ff_path(cfg, p, path);
 
   h = malloc(sizeof(FDIR));
@@ -271,7 +270,7 @@ int fatfs_opendir(const void *cfg, void **handle, const char *path) {
 int fatfs_chmod(const void *cfg, const char *path, int mode) {
   FRESULT result;
   uint8_t fattrib;
-  char p[PATH_MAX];
+  char p[PATH_MAX + 1];
   build_ff_path(cfg, p, path);
   // convert mode from POSIX to FAT
   if (mode == 0666) {
@@ -298,6 +297,7 @@ int fatfs_readdir_r(
   void *handle,
   int loc,
   struct dirent *entry) {
+  MCU_UNUSED_ARGUMENT(cfg);
   FRESULT result;
   FILINFO file_info;
   FDIR *dp = handle;
@@ -341,8 +341,9 @@ int fatfs_readdir_r(
   return 0;
 }
 int fatfs_closedir(const void *cfg, void **handle) {
+  MCU_UNUSED_ARGUMENT(cfg);
   FRESULT result;
-  int ret;
+  int ret = 0;
 
   if (*handle != NULL) {
 
@@ -362,10 +363,12 @@ int fatfs_closedir(const void *cfg, void **handle) {
 }
 
 int fatfs_fstat(const void *cfg, void *handle, struct stat *stat) {
+  MCU_UNUSED_ARGUMENT(cfg);
   FIL *h;
   h = handle;
 
-  memset(stat, 0, sizeof(struct stat));
+  const struct stat empty_stat = {0};
+  *stat = empty_stat;
 
   stat->st_mode = S_IFREG;
   stat->st_size = h->fsize;
@@ -378,21 +381,20 @@ int fatfs_open(
   const char *path,
   int flags,
   int mode) {
-  FIL *h;
-  FRESULT result;
-  char p[PATH_MAX];
-  int f_mode;
+  MCU_UNUSED_ARGUMENT(mode);
+
+  char p[PATH_MAX + 1];
   build_ff_path(cfg, p, path);
 
-  h = malloc(sizeof(FIL));
-  if (h == 0) {
+  FIL *h = malloc(sizeof(FIL));
+  if (h == NULL) {
     sos_debug_log_error(SOS_DEBUG_FILESYSTEM, "Open ENOMEM");
     return SYSFS_SET_RETURN(ENOMEM);
   }
 
-  f_mode = flags_to_fat(flags);
+  int f_mode = flags_to_fat(flags);
 
-  result = f_open(h, p, f_mode);
+  FRESULT result = f_open(h, p, f_mode);
 
   if (result != FR_OK) {
     free(h);
@@ -411,6 +413,8 @@ int fatfs_read(
   int loc,
   void *buf,
   int nbyte) {
+  MCU_UNUSED_ARGUMENT(cfg);
+  MCU_UNUSED_ARGUMENT(flags);
   FRESULT result;
   UINT bytes;
   FIL *f = handle;
@@ -478,6 +482,7 @@ int fatfs_fsync(const void *cfg, void *handle) {
 }
 
 int fatfs_close(const void *cfg, void **handle) {
+  MCU_UNUSED_ARGUMENT(cfg);
   FRESULT result;
   FIL *h;
   h = *handle;
@@ -501,7 +506,7 @@ int fatfs_remove(const void *cfg, const char *path) {
 
 int fatfs_unlink(const void *cfg, const char *path) {
   FRESULT result;
-  char p[PATH_MAX];
+  char p[PATH_MAX + 1];
   build_ff_path(cfg, p, path);
 
   result = f_unlink(p);
@@ -516,11 +521,11 @@ int fatfs_unlink(const void *cfg, const char *path) {
 int fatfs_stat(const void *cfg, const char *path, struct stat *stat) {
   FILINFO file_info;
   FRESULT result;
-  char p[PATH_MAX];
-  char lfn[NAME_MAX];
+  char p[PATH_MAX + 1];
+  char lfn[NAME_MAX + 1];
   memset(lfn, 0, NAME_MAX);
   file_info.lfname = lfn;
-  file_info.lfsize = NAME_MAX - 1;
+  file_info.lfsize = NAME_MAX;
 
   build_ff_path(cfg, p, path);
 
@@ -532,8 +537,8 @@ int fatfs_stat(const void *cfg, const char *path, struct stat *stat) {
 
   // now convert to stat
   // file_info.fdate;
-
-  memset(stat, 0, sizeof(struct stat));
+  const struct stat empty_stat = {0};
+  *stat = empty_stat;
   stat->st_mode = mode_to_posix(file_info.fattrib);
   stat->st_size = file_info.fsize;
   stat->st_mtime = file_info.ftime;
