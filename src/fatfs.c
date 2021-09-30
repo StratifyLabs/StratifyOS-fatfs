@@ -367,8 +367,7 @@ int fatfs_fstat(const void *cfg, void *handle, struct stat *stat) {
   FIL *h;
   h = handle;
 
-  const struct stat empty_stat = {0};
-  *stat = empty_stat;
+  *stat = (struct stat){};
 
   stat->st_mode = S_IFREG;
   stat->st_size = h->fsize;
@@ -521,9 +520,8 @@ int fatfs_unlink(const void *cfg, const char *path) {
 int fatfs_stat(const void *cfg, const char *path, struct stat *stat) {
   FILINFO file_info;
   FRESULT result;
-  char p[PATH_MAX + 1];
-  char lfn[NAME_MAX + 1];
-  memset(lfn, 0, NAME_MAX);
+  char p[PATH_MAX + 1] = {};
+  char lfn[NAME_MAX + 1] = {};
   file_info.lfname = lfn;
   file_info.lfsize = NAME_MAX;
 
@@ -537,8 +535,7 @@ int fatfs_stat(const void *cfg, const char *path, struct stat *stat) {
 
   // now convert to stat
   // file_info.fdate;
-  const struct stat empty_stat = {0};
-  *stat = empty_stat;
+  *stat = (struct stat){};
   stat->st_mode = mode_to_posix(file_info.fattrib);
   stat->st_size = file_info.fsize;
   stat->st_mtime = file_info.ftime;
