@@ -2,7 +2,7 @@
 
 ## New Features
 
-- Nothing yet
+- Update `CMakeLists.txt` to require setup of SDK in a super-project
 
 ## Bug Fixes
 
