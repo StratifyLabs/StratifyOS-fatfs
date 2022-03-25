@@ -163,17 +163,14 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
   const fatfs_config_t *cfgp = cfg_table[pdrv];
   int retries;
 
-  SOS_DEBUG_LINE_TRACE();
   // set the location to the location of the blocks
   retries = 0;
   do {
 
     if (fatfs_dev_waitbusy(pdrv) < 0) {
-      SOS_DEBUG_LINE_TRACE();
       return -1;
     }
 
-    SOS_DEBUG_LINE_TRACE();
     ret = sysfs_shared_read(
       FATFS_DRIVE(cfgp),
       PARTITION_LOCATION(cfgp, loc),
@@ -184,7 +181,6 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
       sos_debug_log_warning(SOS_DEBUG_FILESYSTEM, "FATFS: reinit drive");
       reinitalize_drive(pdrv);
       if (fatfs_dev_waitbusy(pdrv) < 0) {
-        SOS_DEBUG_LINE_TRACE();
         return -1;
       }
     }
@@ -192,7 +188,6 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
   } while ((retries < MAX_RETRIES) && (ret != nbyte));
   loc++;
 
-  SOS_DEBUG_LINE_TRACE();
   if (retries > 1) {
     sos_debug_log_warning(
       SOS_DEBUG_FILESYSTEM,
@@ -200,7 +195,6 @@ int fatfs_dev_read(BYTE pdrv, int loc, void *buf, int nbyte) {
       retries);
   }
 
-  SOS_DEBUG_LINE_TRACE();
   if (retries == MAX_RETRIES) {
     sos_debug_log_error(
       SOS_DEBUG_FILESYSTEM,
@@ -236,8 +230,6 @@ int fatfs_dev_waitbusy(BYTE pdrv) {
   while (
     (result = sysfs_shared_ioctl(FATFS_DRIVE(cfgp), I_DRIVE_ISBUSY, 0) > 0)
     && ((count < cfgp->wait_busy_timeout_count) || (cfgp->wait_busy_timeout_count == 0))) {
-    SOS_DEBUG_LINE_TRACE();
-    sos_debug_printf("w:%ld\n", exponential_wait);
     if (exponential_wait) {
       usleep(exponential_wait);
     }
