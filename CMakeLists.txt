@@ -2,9 +2,9 @@ cmake_minimum_required (VERSION 3.12)
 
 project(fatfs CXX C)
 
-sos_sdk_library_target(RELEASE ${PROJECT_NAME} "${LIB_OPTION}" release ${SOS_ARCH})
-sos_sdk_add_out_of_source_directory(PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src ${RELEASE_TARGET}_src)
-sos_sdk_add_out_of_source_directory(INTERFACE_SOURCES include ${RELEASE_TARGET}_include)
+cmsdk_library_target(RELEASE ${PROJECT_NAME} "${LIB_OPTION}" release ${CMSDK_ARCH})
+cmsdk_add_out_of_source_directory(PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src ${RELEASE_TARGET}_src)
+cmsdk_add_out_of_source_directory(INTERFACE_SOURCES include ${RELEASE_TARGET}_include)
 
 add_library(${RELEASE_TARGET} STATIC)
 
@@ -23,11 +23,11 @@ target_include_directories(${RELEASE_TARGET}
 	${CMAKE_CURRENT_SOURCE_DIR}/include/fatfs
 	)
 
-sos_sdk_library_target(DEBUG ${PROJECT_NAME} "${LIB_OPTION}" debug ${SOS_ARCH})
+cmsdk_library_target(DEBUG ${PROJECT_NAME} "${LIB_OPTION}" debug ${CMSDK_ARCH})
 add_library(${DEBUG_TARGET} STATIC)
-sos_sdk_copy_target(${RELEASE_TARGET} ${DEBUG_TARGET})
-sos_sdk_library_add_arch_targets("${DEBUG_OPTIONS}" ${SOS_ARCH} "StratifyOS_mcu")
-sos_sdk_library_add_arch_targets("${RELEASE_OPTIONS}" ${SOS_ARCH} "StratifyOS_mcu")
+cmsdk_copy_target(${RELEASE_TARGET} ${DEBUG_TARGET})
+cmsdk_library_add_arch_targets("${DEBUG_OPTIONS}" ${CMSDK_ARCH} "StratifyOS_mcu")
+cmsdk_library_add_arch_targets("${RELEASE_OPTIONS}" ${CMSDK_ARCH} "StratifyOS_mcu")
 
 target_compile_options(${RELEASE_TARGET}
 	PRIVATE
