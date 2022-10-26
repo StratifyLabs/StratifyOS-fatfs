@@ -1,3 +1,9 @@
+# Version 1.2.0
+
+## New Features
+
+- Update to `cmsdk2_` functions for CMakeSDK
+
 # Version 1.1.0
 
 ## New Features
