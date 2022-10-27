@@ -1,3 +1,9 @@
+# Version 1.3.0 (unreleased)
+
+## New Features
+
+- None
+
 # Version 1.2.0
 
 ## New Features
