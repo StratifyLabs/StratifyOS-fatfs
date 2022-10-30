@@ -1,8 +1,12 @@
 cmake_minimum_required (VERSION 3.12)
+cmsdk2_minimum_required(2.1.2)
 
-project(fatfs CXX C)
+project(fatfs
+	LANGUAGES C
+	VERSION 1.2.1)
 
-cmsdk_library_target(RELEASE ${PROJECT_NAME} "${LIB_OPTION}" release ${CMSDK_ARCH})
+set(${PROJECT_NAME}_VERSION ${PROJECT_VERSION} CACHE INTERNAL "StratifyOS project version")
+
 cmsdk_add_out_of_source_directory(PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src ${RELEASE_TARGET}_src)
 cmsdk_add_out_of_source_directory(INTERFACE_SOURCES include ${RELEASE_TARGET}_include)
 
